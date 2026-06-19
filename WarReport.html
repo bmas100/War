@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بازسازی مناطق آسیب‌دیده جنگ رمضان</title>
+
+    <script src="./xlsx.full.min.js"></script>
+    <script src="./apexcharts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="./all.min.js"></script> 
+
+    <style>
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('./Vazirmatn.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            font-family: 'Vazirmatn', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Tahoma", sans-serif; 
+        }
+        body { background: #f4f7fb; padding: 12px; color: #1e293b; overflow-x: hidden; }
+        .container { max-width: 1900px; margin: auto; }
+
+        .banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #0369a1 100%);
+            border-radius: 24px; padding: 25px; margin-bottom: 12px; color: #ffffff;
+            box-shadow: 0 12px 30px rgba(30, 58, 138, 0.2); position: relative; overflow: hidden;
+        }
+        .banner::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .banner-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; z-index: 2; position: relative; }
+        .banner-text h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .banner-text h1 svg { margin-left: 10px; color: #38bdf8; vertical-align: middle; }
+        .banner-text p { font-size: 14px; color: #cbd5e1; margin-top: 12px; font-weight: 400; }
+        
+        .desktop-logo { height: 75px; object-fit: contain; margin: 0 15px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+        .mobile-logo { display: none; height: 70px; object-fit: contain; margin: 20px auto 5px auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+
+        .banner-widgets { display: flex; gap: 12px; flex-wrap: wrap; }
+        .glass-widget {
+            background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.25); padding: 10px 18px;
+            border-radius: 16px; display: flex; align-items: center; gap: 12px; min-width: 170px;
+        }
+        .glass-widget svg { font-size: 24px; color: #7dd3fc; }
+        .glass-widget .w-info { display: flex; flex-direction: column; }
+        .glass-widget .w-label { font-size: 12px; color: #f8fafc; font-weight: 700; margin-bottom: 2px; text-shadow: 0 2px 2px rgba(0,0,0,0.2);}
+        .glass-widget .w-val { font-size: 19px; font-weight: 800; color: #f0fc62; margin-top: 5px; text-shadow: 0 2px 2px rgba(0,0,0,0.2); }
+
+        /* Infographics/Charts Grid (Compact for 1 row) */
+        .infographic-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+        .panel { background: #ffffff; border-radius: 20px; padding: 10px; box-shadow: 0 4px 15px rgba(15,23,42,0.03); border: 1px solid #e2e8f0; min-width: 0; }
+        .panel-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #0f172a; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+        .panel-title svg { color: #2563eb; }
+
+        .bottom-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .left-column { display: flex; flex-direction: column; gap: 16px; }
+        .right-column { display: flex; flex-direction: column; }
+        
+        .section { 
+            background: #ffffff; 
+            border-radius: 24px; 
+            padding: 22px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 30px -3px rgba(15, 23, 42, 0.08); 
+            border: 1px solid #e2e8f0; 
+            position: relative; 
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+        }
+        .section:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -5px rgba(15, 23, 42, 0.12), 0 10px 20px -6px rgba(15, 23, 42, 0.12);
+            border-color: #cbd5e1;
+        }
+        .section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; }
+        .section.evaluation-card::before { background: linear-gradient(90deg, #16a34a, #4ade80); }
+        .section.performance-card::before { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+        .section.permit-card::before { background: linear-gradient(90deg, #0f766e, #2de2d6); }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #f1f5f9; flex-wrap: wrap; gap: 10px; }
+        
+        .badge { padding: 6px 18px; border-radius: 10px; font-size: 14px; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 8px; }
+        .green-badge { background: linear-gradient(135deg, #16a34a, #15803d); }
+        .blue-badge { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        .teal-badge { background: linear-gradient(135deg, #0f766e, #0d9488); }
+        .sec-date { font-size: 13px; font-weight: 700; color: #475569; background: #e2e8f0; padding: 4px 12px; border-radius: 8px; }
+
+        .data-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+        .data-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
+        .data-item:hover { background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-color: #cbd5e1; }
+        
+        .data-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
+        .data-info { flex: 1; min-width: 0; }
+        .data-label { font-size: 12px; color: #475569; font-weight: 600; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .data-value { font-size: 18px; font-weight: 800; margin-top: 1px; color: #0f172a; }
+
+        .bg-orange { background: #fff7ed; color: #ea580c; }
+        .bg-purple { background: #faf5ff; color: #7e22ce; }
+        .bg-blue { background: #eff6ff; color: #2563eb; }
+        .bg-green { background: #f0fdf4; color: #16a34a; }
+        .bg-teal { background: #f2fbf9; color: #0f766e; }
+        .bg-red { background: #fef2f2; color: #dc2626; }
+        .bg-amber { background: #fffbeb; color: #b45309; }
+        .bg-indigo { background: #e0e7ff; color: #4338ca; }
+
+        .strip-container { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+        .strip { padding: 12px 16px; border-radius: 12px; font-size: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01); gap: 10px; }
+        .blue-strip { background: linear-gradient(90deg, #dbeafe, #bfdbfe); color: #1d4ed8; border: 1px solid #93c5fd; }
+        .strip-title-wrapper { display: flex; align-items: center; gap: 10px; }
+        .strip-title-wrapper svg { font-size: 18px; }
+        .strip-val { font-size: 19px; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
+
+        @media (max-width: 1200px) { .infographic-row { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+        @media (max-width: 992px) {
+            .bottom-sections { grid-template-columns: 1fr; gap: 20px; }
+            .banner-content { flex-direction: column; align-items: center; text-align: center; gap: 16px; }
+            .banner-widgets { width: 100%; justify-content: center; }
+            .glass-widget { flex: 1; min-width: 180px; justify-content: center; }
+            .desktop-logo { display: none; }
+            .mobile-logo { display: block; }
+            .banner-text { width: 100%; text-align: center; }
+            .banner-text h1 { display: flex; justify-content: center; align-items: center; }
+        }
+        @media (max-width: 768px) {
+            body { padding: 8px; }
+            .banner { padding: 16px; border-radius: 16px; margin-bottom: 10px; }
+            .banner-text h1 { font-size: 20px; line-height: 1.4; justify-content: center; display: flex; }
+            .banner-text p { font-size: 12px; }
+            .glass-widget { padding: 8px 12px; gap: 8px; }
+            .glass-widget svg { font-size: 20px; }
+            .glass-widget .w-val { font-size: 15px; }
+            .panel { border-radius: 16px; padding: 12px; }
+            .section { padding: 16px; border-radius: 16px; }
+            .data-grid { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 8px; }
+            .data-item { padding: 10px; gap: 8px; flex-direction: column; text-align: center; justify-content: center; }
+            .data-icon { width: 40px; height: 40px; font-size: 18px; margin-bottom: 2px; }
+            .data-label { font-size: 11px; white-space: normal; text-overflow: unset; overflow: visible; }
+            .data-value { font-size: 16px; margin-top: 4px; }
+            .strip { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 12px; }
+            .strip-title-wrapper { font-size: 12px; line-height: 1.4; }
+            .strip div:last-child { align-self: flex-end; font-size: 12px; }
+            .strip-val { font-size: 16px; }
+        }
+        @media (max-width: 480px) {
+            .infographic-row { grid-template-columns: 1fr; gap: 12px; }
+            .data-grid { grid-template-columns: 1fr; }
+            .data-item { flex-direction: row; text-align: right; justify-content: flex-start; padding: 12px; }
+            .data-icon { margin-bottom: 0; margin-left: 4px; }
+            .data-value { margin-top: 0; }
+            .glass-widget { min-width: 100%; justify-content: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="banner">
+        <div class="banner-content">
+            <div class="banner-text">
+                <h1><i class="fa-solid fa-shield-halved"></i>بازسازی مناطق آسیب‌دیده جنگ رمضان</h1>
+                <img src="./Logo_Riasat.png" alt="آرم بنیاد" class="mobile-logo" />
+            </div>
+            <img src="./Logo.png" alt="آرم بنیاد" class="desktop-logo" />
+            <div class="banner-widgets">
+                <div class="glass-widget">
+                    <i class="fa-solid fa-house-chimney-crack"></i>
+                    <div class="w-info">
+                        <span class="w-label">واحدهای ارزیابی شده</span>
+                        <span class="w-val" id="top-grand-total">۰</span>
+                    </div>
+                </div>
+                <div class="glass-widget">
+                    <i class="fa-solid fa-money-bill-trend-up"></i>
+                    <div class="w-info">
+                        <span class="w-label">اعتبار مورد نیاز</span>
+                        <span class="w-val" id="top-budget">۰ همت</span>
+                    </div>
+                </div>
+                <div class="glass-widget">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <div class="w-info">
+                        <span class="w-label">تاریخ گزارش</span>
+                        <span class="w-val" id="top-date">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="infographic-row">
+        <div class="panel">
+            <div class="panel-title"><i class="fa-solid fa-chart-pie"></i>ارزیابی آسیب‌ها و نیازمندی‌ها</div>
+            <div id="typeChart"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title"><i class="fa-solid fa-chart-pie"></i>اقدامات میدانی و عملیاتی</div>
+            <div id="performanceChart"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title"><i class="fa-solid fa-layer-group"></i>روند پروانه ساختمانی و نقشه‌ها</div>
+            <div id="permitChart"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title"><i class="fa-solid fa-chart-bar"></i>توزیع تخصیص اعتبارات مالی مصوب (همت)</div>
+            <div id="budgetChart"></div>
+        </div>
+    </div>
+
+    <div class="bottom-sections">
+        <div class="right-column">
+            <div class="section evaluation-card">
+                <div class="section-header">
+                    <div class="badge green-badge"><i class="fa-solid fa-clipboard-check"></i>بخش ارزیابی خسارت</div>
+                    <div class="sec-date">تاریخ گزارش: <span id="date-eval">-</span></div>
+                </div>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-icon bg-blue"><i class="fa-solid fa-map-location-dot"></i></div>
+                        <div class="data-info"><div class="data-label">استان‌های آسیب‌دیده</div><div class="data-value" id="e-provinces">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-indigo"><i class="fa-solid fa-city"></i></div>
+                        <div class="data-info"><div class="data-label">شهرهای آسیب‌دیده</div><div class="data-value" id="e-cities">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-teal"><i class="fa-solid fa-tree-city"></i></div>
+                        <div class="data-info"><div class="data-label">روستاهای آسیب‌دیده</div><div class="data-value" id="e-villages">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-orange"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                        <div class="data-info"><div class="data-label">تعمیری نوع ۱</div><div class="data-value" id="e-r1">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-purple"><i class="fa-solid fa-hammer"></i></div>
+                        <div class="data-info"><div class="data-label">تعمیری نوع ۲</div><div class="data-value" id="e-r2">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-blue"><i class="fa-solid fa-trowel-bricks"></i></div>
+                        <div class="data-info"><div class="data-label">تعمیری نوع ۳</div><div class="data-value" id="e-r3">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-green"><i class="fa-solid fa-house-medical-circle-check"></i></div>
+                        <div class="data-info"><div class="data-label">جمع واحدهای تعمیری</div><div class="data-value" id="e-rtot">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-red"><i class="fa-solid fa-trowel"></i></div>
+                        <div class="data-info"><div class="data-label">واحدهای احداثی</div><div class="data-value" id="e-constr">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-amber"><i class="fa-solid fa-couch"></i></div>
+                        <div class="data-info"><div class="data-label">تأمین لوازم معیشتی</div><div class="data-value" id="e-live">۰</div></div>
+                    </div>
+                </div>
+                
+                <div class="strip-container">
+                    <div class="strip" style="background: linear-gradient(90deg, #f0fdf4, #dcfce7); color: #166534; border: 1px solid #bbf7d0;">
+                        <div class="strip-title-wrapper"><i class="fa-solid fa-house-chimney-window"></i><span>کل واحدهای ارزیابی شده (سایر شهرها و روستاها):</span></div>
+                        <div><span class="strip-val" id="e-others-strip">۰</span> <span>واحد</span></div>
+                    </div>
+                    <div class="strip" style="background: linear-gradient(90deg, #e6fbf1, #ccfbf1); color: #0f766e; border: 1px solid #99f6e4;">
+                        <div class="strip-title-wrapper"><i class="fa-solid fa-building-user"></i><span>کل واحدهای ارزیابی شده (کلان‌شهرها):</span></div>
+                        <div><span class="strip-val" id="e-metros-strip">۰</span> <span>واحد</span></div>
+                    </div>
+                    <div class="strip" style="background: linear-gradient(90deg, #dcfce7, #bbf7d0); color: #15803d; border: 1px solid #a7f3d0;">
+                        <div class="strip-title-wrapper"><i class="fa-solid fa-calculator"></i><span>کل واحدهای ارزیابی شده (کلان‌شهر + شهرها + روستاها):</span></div>
+                        <div><span class="strip-val" id="e-grand-total">۰</span> <span>واحد</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="left-column">
+            <div class="section performance-card">
+                <div class="section-header">
+                    <div class="badge blue-badge"><i class="fa-solid fa-business-time"></i>بخش عملکرد اجرایی</div>
+                    <div class="sec-date">تاریخ گزارش: <span id="date-perf">-</span></div>
+                </div>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-icon bg-red"><i class="fa-solid fa-truck-pickup"></i></div>
+                        <div class="data-info"><div class="data-label">واحدهای آواربرداری شده</div><div class="data-value" id="p-debris">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-orange"><i class="fa-solid fa-file-signature"></i></div>
+                        <div class="data-info"><div class="data-label">طراحی و صدور پروانه</div><div class="data-value" id="p-permits">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-purple"><i class="fa-solid fa-arrow-up-from-ground-water"></i></div>
+                        <div class="data-info"><div class="data-label">تعمیرات نوع 1 </div><div class="data-value" id="p-r1">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-teal"><i class="fa-solid fa-gavel"></i></div>
+                        <div class="data-info"><div class="data-label">تعمیرات نوع 2 (جزئی)</div><div class="data-value" id="p-r2">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-indigo"><i class="fa-solid fa-door-open"></i></div>
+                        <div class="data-info"><div class="data-label">تعمیرات نوع 3 (درب و پنجره)</div><div class="data-value" id="p-r3">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-blue"><i class="fa-solid fa-landmark"></i></div>
+                        <div class="data-info"><div class="data-label">ارسالی به سامانه وزارت راه و شهرسازی</div><div class="data-value" id="p-ministry">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-purple"><i class="fa-solid fa-building-columns"></i></div>
+                        <div class="data-info"><div class="data-label">متقاضیان انتخاب شعبه نموده</div><div class="data-value" id="p-branch">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-amber"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                        <div class="data-info"><div class="data-label">تعداد تسهیلات ودیعه پرداخت شده</div><div class="data-value" id="p-deposit">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-teal"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                        <div class="data-info"><div class="data-label">اعتبار احداثی (همت)</div><div class="data-value" id="p-cbudget">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-blue"><i class="fa-solid fa-coins"></i></div>
+                        <div class="data-info"><div class="data-label">اعتبار تعمیری (همت)</div><div class="data-value" id="p-rbudget">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-green"><i class="fa-solid fa-vault"></i></div>
+                        <div class="data-info"><div class="data-label">کل اعتبار مورد نیاز (همت)</div><div class="data-value" id="p-tbudget">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-indigo"><i class="fa-solid fa-credit-card"></i></div>
+                        <div class="data-info"><div class="data-label">تسهیلات پرداختی (م.ر)</div><div class="data-value" id="p-loan">۰</div></div>
+                    </div>
+                </div>
+                <div class="strip-container">
+                    <div class="blue-strip strip">
+                        <div class="strip-title-wrapper"><i class="fa-solid fa-circle-check"></i><span>جمع کل واحدهای تعمیر شده عملیاتی:</span></div>
+                        <div><span class="strip-val" id="p-strip-val">۰</span> <span>واحد</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section permit-card">
+                <div class="section-header">
+                    <div class="badge teal-badge"><i class="fa-solid fa-file-shield"></i>بخش پروانه ساختمانی</div>
+                    <div class="sec-date">تاریخ گزارش: <span id="date-permit">-</span></div>
+                </div>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-icon bg-indigo"><i class="fa-solid fa-building-user"></i></div>
+                        <div class="data-info"><div class="data-label">معرفی به نظام مهندسی</div><div class="data-value" id="perm-eng">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-blue"><i class="fa-solid fa-building-shield"></i></div>
+                        <div class="data-info"><div class="data-label">معرفی به شهرداری</div><div class="data-value" id="perm-munic">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-teal"><i class="fa-solid fa-compass-drafting"></i></div>
+                        <div class="data-info"><div class="data-label">نقشه تهیه شده</div><div class="data-value" id="perm-map">۰</div></div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-icon bg-green"><i class="fa-solid fa-id-card-clip"></i></div>
+                        <div class="data-info"><div class="data-label">پروانه صادر شده</div><div class="data-value" id="perm-issued">۰</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function cleanValue(v) {
+        if(v === undefined || v === null) return 0;
+        if(typeof v === 'number') return v;
+        let s = String(v).replace(/,/g, '').replace(/،/g, '.').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^\d.-]/g, '');
+        let num = parseFloat(s);
+        return isNaN(num) ? 0 : num;
+    }
+
+    function fa(v, isFloat = false) {
+        if(v === undefined || v === null) return '۰';
+        if(typeof v === 'number') {
+            return isFloat ? v.toLocaleString('fa-IR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : v.toLocaleString('fa-IR');
+        }
+        return String(v).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+    }
+
+    function normalizeKey(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/[\r\n\s\u200c\u200b]+/g, '')
+            .replace(/ی/g, 'ی').replace(/ي/g, 'ی')
+            .replace(/ک/g, 'ک').replace(/ك/g, 'ک')
+            .replace(/ة/g, 'ه').replace(/آ/g, 'ا')
+            .trim().toLowerCase();
+    }
+
+    function findValueByKeywords(dataObj, keywordsArray, excludeKeywords = []) {
+        for (let rawKey in dataObj) {
+            let normKey = normalizeKey(rawKey);
+            let matchesAll = keywordsArray.every(kw => normKey.includes(normalizeKey(kw)));
+            let matchesNoneOfExclude = excludeKeywords.length === 0 || !excludeKeywords.some(kw => normKey.includes(normalizeKey(kw)));
+            if (matchesAll && matchesNoneOfExclude) return dataObj[rawKey];
+        }
+        return 0;
+    }
+
+    function processSheetToMap(sheet) {
+        const obj = {};
+        if (!sheet) return obj;
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        if (!rows || rows.length < 2) return obj;
+        
+        const headers = rows[0];
+        const values = rows[1] || []; 
+        
+        headers.forEach((h, idx) => { 
+            if (h !== undefined && h !== null) obj[h] = values[idx]; 
+        });
+        return obj;
+    }
+
+    async function loadExcel() {
+        let workbook;
+        try {
+            const response = await fetch('./SourceData.xlsx');
+            if (!response.ok) throw new Error();
+            const buffer = await response.arrayBuffer();
+            workbook = XLSX.read(buffer, { type: 'array' });
+        } catch (err) {
+            console.error(err);
+            alert("خطا در خواندن اطلاعات!");
+            return;
+        }
+
+        try {
+            const eData = processSheetToMap(workbook.Sheets['ارزیابی']);
+            const pData = processSheetToMap(workbook.Sheets['عملکرد']);
+            const permData = processSheetToMap(workbook.Sheets['پروانه ساختمانی']);
+            renderUI(eData, pData, permData);
+        } catch (err) {
+            console.error("رندر با خطا مواجه شد:", err);
+            alert("داده‌ها با موفقیت فراخوانی شدند، اما در زمان ترسیم مشکلی رخ داد: " + err.message);
+        }
+    }
+
+    function renderUI(e, p, perm) {
+        const provinces = cleanValue(findValueByKeywords(e, ['استان']));
+        const cities    = cleanValue(findValueByKeywords(e, ['شهرهای']));
+        const villages  = cleanValue(findValueByKeywords(e, ['روستا'], ['سایر', '+']));
+        const r1        = cleanValue(findValueByKeywords(e, ['تعمیری', '1']));
+        const r2        = cleanValue(findValueByKeywords(e, ['تعمیری', '2']));
+        const r3        = cleanValue(findValueByKeywords(e, ['تعمیری', '3']));
+        const rTot      = cleanValue(findValueByKeywords(e, ['جمع', 'تعمیری']));
+        const constr    = cleanValue(findValueByKeywords(e, ['احداثی'], ['تعمیری', '+', 'سایر', 'کلان']));
+        const live      = cleanValue(findValueByKeywords(e, ['معیشتی'], ['تعمیری', '+', 'سایر', 'کلان']));
+        const others    = cleanValue(findValueByKeywords(e, ['سایر']));
+        
+        const metros    = cleanValue(findValueByKeywords(e, ['کلان', 'شهرها'], ['روستا']));
+        const grandTotal= cleanValue(findValueByKeywords(e, ['کلان', 'شهر', '+', 'روستا']));
+        
+        const dateEval  = findValueByKeywords(e, ['تاریخ']) || '-';
+
+        const debris   = cleanValue(findValueByKeywords(p, ['آواربرداری']));
+        const permits  = cleanValue(findValueByKeywords(p, ['طراحی', 'پروانه']));
+        const pr1      = cleanValue(findValueByKeywords(p, ['تعمیرات', '1']));
+        const pr2      = cleanValue(findValueByKeywords(p, ['تعمیرات', '2']));
+        const pr3      = cleanValue(findValueByKeywords(p, ['تعمیرات', '3']));
+        const repaired = cleanValue(findValueByKeywords(p, ['واحدهای', 'تعمیر', 'شده']));
+        const ministry = cleanValue(findValueByKeywords(p, ['وزارت', 'راه']));
+        const branch   = cleanValue(findValueByKeywords(p, ['انتخاب', 'شعبه'])); 
+        const deposit  = cleanValue(findValueByKeywords(p, ['ودیعه']));
+        const cBudget  = cleanValue(findValueByKeywords(p, ['اعتبار', 'احداثی']));
+        const rBudget  = cleanValue(findValueByKeywords(p, ['اعتبار', 'تعمیری']));
+        const tBudget  = cleanValue(findValueByKeywords(p, ['کل', 'اعتبار']));
+        const loan     = cleanValue(findValueByKeywords(p, ['میلیارد']));
+        const datePerf = findValueByKeywords(p, ['تاریخ']) || '-';
+
+        const pmEng    = cleanValue(findValueByKeywords(perm, ['نظام', 'مهندسی']));
+        const pmMap    = cleanValue(findValueByKeywords(perm, ['نقشه']));
+        const pmMunic  = cleanValue(findValueByKeywords(perm, ['شهرداری']));
+        const pmIssued = cleanValue(findValueByKeywords(perm, ['پروانه', 'صادر']));
+        const datePerm = findValueByKeywords(perm, ['تاریخ']) || '-';
+
+        document.getElementById('top-grand-total').innerText = fa(grandTotal);
+        document.getElementById('top-budget').innerText = fa(tBudget, true) + ' همت';
+        document.getElementById('top-date').innerText = fa(datePerf);
+
+        document.getElementById('date-eval').innerText = fa(dateEval);
+        document.getElementById('e-provinces').innerText = fa(provinces);
+        document.getElementById('e-cities').innerText = fa(cities);
+        document.getElementById('e-villages').innerText = fa(villages);
+        document.getElementById('e-r1').innerText = fa(r1);
+        document.getElementById('e-r2').innerText = fa(r2);
+        document.getElementById('e-r3').innerText = fa(r3);
+        document.getElementById('e-rtot').innerText = fa(rTot);
+        document.getElementById('e-constr').innerText = fa(constr);
+        document.getElementById('e-live').innerText = fa(live);
+        document.getElementById('e-grand-total').innerText = fa(grandTotal);
+        document.getElementById('e-metros-strip').innerText = fa(metros);
+        document.getElementById('e-others-strip').innerText = fa(others);
+
+        document.getElementById('date-perf').innerText = fa(datePerf);
+        document.getElementById('p-debris').innerText = fa(debris);
+        document.getElementById('p-permits').innerText = fa(permits);
+        document.getElementById('p-r1').innerText = fa(pr1);
+        document.getElementById('p-r2').innerText = fa(pr2);
+        document.getElementById('p-r3').innerText = fa(pr3);
+        document.getElementById('p-ministry').innerText = fa(ministry);
+        document.getElementById('p-branch').innerText = fa(branch);
+        document.getElementById('p-deposit').innerText = fa(deposit);
+        document.getElementById('p-cbudget').innerText = fa(cBudget, true);
+        document.getElementById('p-rbudget').innerText = fa(rBudget, true);
+        document.getElementById('p-tbudget').innerText = fa(tBudget, true);
+        document.getElementById('p-loan').innerText = fa(loan);
+        document.getElementById('p-strip-val').innerText = fa(repaired);
+
+        document.getElementById('date-permit').innerText = fa(datePerm);
+        document.getElementById('perm-eng').innerText = fa(pmEng);
+        document.getElementById('perm-map').innerText = fa(pmMap);
+        document.getElementById('perm-munic').innerText = fa(pmMunic);
+        document.getElementById('perm-issued').innerText = fa(pmIssued);
+
+        renderCharts(r1, r2, r3, constr, live, pr1, pr2, pr3, repaired, cBudget, rBudget, tBudget, pmEng, pmMap, pmMunic, pmIssued);
+    }
+
+    function renderCharts(r1, r2, r3, constr, live, pr1, pr2, pr3, repaired, cBudget, rBudget, tBudget, pmEng, pmMap, pmMunic, pmIssued) {
+        
+        document.querySelector("#typeChart").innerHTML = "";
+        document.querySelector("#performanceChart").innerHTML = "";
+        document.querySelector("#permitChart").innerHTML = "";
+        document.querySelector("#budgetChart").innerHTML = "";
+
+        if (typeof echarts !== 'undefined') {
+            let typeChartDom = document.getElementById('typeChart');
+            typeChartDom.style.height = "255px";
+            let typeChart = echarts.init(typeChartDom);
+            
+            let totalPie = r1 + r2 + r3 + constr + live;
+            let rTotPie = r1 + r2 + r3;
+
+            let optionType = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b} : {c} ({d}%)',
+                    textStyle: { fontFamily: 'Vazirmatn', direction: 'rtl' }
+                },
+                legend: {
+                    bottom: 0,
+                    left: 'center',
+                    data: ['جمع تعمیری', 'احداثی', 'لوازم معیشتی'],
+                    textStyle: { fontFamily: 'Vazirmatn', fontSize: 11 }
+                },
+                color: ['#2563eb', '#16a34a', '#ea580c'],
+                series: [
+                    {
+                        type: 'pie',
+                        radius: '55%',
+                        center: ['50%', '45%'],
+                        selectedMode: 'single',
+                        label: {
+                            show: true,
+                            position: 'outside',
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 10,
+                            formatter: function(params) {
+                                if (params.name === 'جمع تعمیری') {
+                                    return `نوع ۱: ${fa(r1)} واحد\nنوع ۲: ${fa(r2)} واحد\nنوع ۳: ${fa(r3)} واحد`;
+                                }
+                                return `${params.name}: ${fa(params.value)} واحد`;
+                            }
+                        },
+                        labelLine: {
+                            show: true,
+                            length: 25,
+                            length2: 20
+                        },
+                        data: [
+                            { value: rTotPie, name: 'جمع تعمیری' },
+                            { value: constr, name: 'احداثی' },
+                            { value: live, name: 'لوازم معیشتی' }
+                        ],
+                        emphasis: {
+                            itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
+                        }
+                    }
+                ]
+            };
+            typeChart.setOption(optionType);
+        }
+
+        if (typeof ApexCharts === 'undefined') return;
+
+        let pct1 = r1 > 0 ? Math.min(Math.round((pr1 / r1) * 100), 100) : 0;
+        let pct2 = r2 > 0 ? Math.min(Math.round((pr2 / r2) * 100), 100) : 0;
+        let pct3 = r3 > 0 ? Math.min(Math.round((pr3 / r3) * 100), 100) : 0;
+
+        new ApexCharts(document.querySelector("#performanceChart"), {
+            chart: { type: 'radialBar', height: 240 },
+            series: [pct1, pct2, pct3],
+            labels: ['نوع ۱ ', 'نوع ۲ (جزئی)', 'نوع ۳ (درب و پنجره)'],
+            colors: ['#a855f7', '#14b8a6', '#3b82f6'],
+            plotOptions: {
+                radialBar: {
+                    hollow: { size: '38%' },
+                    track: { background: '#f1f5f9', strokeWidth: '100%' },
+                    dataLabels: {
+                        name: { show: false },
+                        value: { show: true, fontSize: '14px', fontFamily: 'inherit', fontWeight: '800', color: '#0f172a', offsetY: -2 },
+                        total: {
+                            show: true,
+                            label: '',
+                            color: '#0f172a',
+                            fontFamily: 'inherit',
+                            fontWeight: '800',
+                            fontSize: '16px',
+                            formatter: function () {
+                                let totalNeed = r1 + r2 + r3;
+                                if(totalNeed === 0) return '۰٪';
+                                return Math.round((repaired / totalNeed) * 100).toLocaleString('fa-IR') + '٪';
+                            }
+                        }
+                    }
+                }
+            },
+            legend: {
+                show: true, 
+                position: 'bottom', 
+                fontFamily: 'inherit', 
+                fontSize: '11px', 
+                labels: { colors: '#334155' },
+                markers: {
+                    show: true,
+                    width: 12,
+                    height: 12,
+                    radius: 12
+                },
+                formatter: function(seriesName, opts) {
+                    const exactVals = [pr1, pr2, pr3];
+                    const currentVal = (opts && opts.seriesIndex !== undefined) ? exactVals[opts.seriesIndex] : 0;
+                    return seriesName + ': ' + currentVal.toLocaleString('fa-IR') + ' واحد';
+                }
+            }
+        }).render();
+
+        new ApexCharts(document.querySelector("#permitChart"), {
+            chart: { type: 'bar', height: 215, toolbar: { show: false }, parentHeightOffset: 0 },
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    horizontal: true,
+                    distributed: true,
+                    barHeight: '55%'
+                }
+            },
+            colors: ['#4f46e5', '#2563eb', '#06b6d4', '#16a34a'],
+            dataLabels: { 
+                enabled: true, 
+                style: { fontFamily: 'inherit', fontSize: '11px', fontWeight: '700' },
+                formatter: function (val) { return val.toLocaleString('fa-IR'); }
+            },
+            series: [{ name: 'تعداد فرآیند', data: [pmEng, pmMunic, pmMap, pmIssued] }],
+            xaxis: {
+                categories: ['نظام مهندسی', 'شهرداری', 'تهیه نقشه', 'صدور پروانه'],
+                labels: { show: false },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            yaxis: {
+                labels: { style: { fontFamily: 'inherit', fontSize: '11px', fontWeight: '600' } }
+            },
+            grid: { show: false }
+        }).render();
+
+        new ApexCharts(document.querySelector("#budgetChart"), {
+            chart: { type: 'bar', height: 215, toolbar: { show: false }, parentHeightOffset: 0 },
+            series: [{ name: 'حجم اعتبار (همت)', data: [cBudget, rBudget, tBudget] }],
+            plotOptions: { bar: { borderRadius: 6, columnWidth: '45%', distributed: true } },
+            colors: ['#0f766e', '#3b82f6', '#16a34a'],
+            dataLabels: { enabled: true, style: { fontFamily: 'inherit', fontSize: '11px' } },
+            legend: { show: false },
+            xaxis: {
+                categories: ['اعتبار احداثی', 'اعتبار تعمیری', 'کل اعتبارات پروژه'],
+                labels: { style: { fontFamily: 'inherit', fontSize: '10px', fontWeight: '600' } }
+            }
+        }).render();
+    }
+
+    function injectScript(src) {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script'); s.src = src;
+            s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
+        });
+    }
+
+    window.onload = async function() {
+        if (typeof XLSX === 'undefined' || typeof ApexCharts === 'undefined' || typeof echarts === 'undefined') {
+            try {
+                if (typeof XLSX === 'undefined') await injectScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+                if (typeof ApexCharts === 'undefined') await injectScript('https://cdn.jsdelivr.net/npm/apexcharts');
+                if (typeof echarts === 'undefined') await injectScript('https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js');
+            } catch (e) { console.error("CDN backup failed", e); }
+        }
+        loadExcel();
+    };
+</script>
+
+</body>
+</html>
