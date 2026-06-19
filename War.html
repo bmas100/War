@@ -538,6 +538,7 @@
             let typeChart = echarts.init(typeChartDom);
             
             let totalPie = r1 + r2 + r3 + constr + live;
+            let getP = (v) => totalPie > 0 ? (v / totalPie * 100).toFixed(1) : 0;
             let rTotPie = r1 + r2 + r3;
 
             let optionType = {
@@ -559,25 +560,35 @@
                         radius: '55%',
                         center: ['50%', '45%'],
                         selectedMode: 'single',
-                        label: {
-                            show: true,
-                            position: 'outside',
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 10,
-                            formatter: function(params) {
-                                if (params.name === 'جمع تعمیری') {
-                                    return `نوع ۱: ${fa(r1)} واحد\nنوع ۲: ${fa(r2)} واحد\nنوع ۳: ${fa(r3)} واحد`;
-                                }
-                                return `${params.name}: ${fa(params.value)} واحد`;
-                            }
-                        },
-                        labelLine: {
-                            show: true,
-                            length: 25,
-                            length2: 20
-                        },
                         data: [
-                            { value: rTotPie, name: 'جمع تعمیری' },
+                            {
+                                value: rTotPie,
+                                name: 'جمع تعمیری',
+                                label: {
+                                    formatter: [
+                                        '{title|{b}}{abg|}',
+                                        
+                                        `  {type|نوع ۱}{value|${fa(r1)}}{rate|${fa(getP(r1))}٪}`,
+                                        `  {type|نوع ۲}{value|${fa(r2)}}{rate|${fa(getP(r2))}٪}`,
+                                        `  {type|نوع ۳}{value|${fa(r3)}}{rate|${fa(getP(r3))}٪}`
+                                    ].join('\n'),
+                                    backgroundColor: '#f8fafc',
+                                    borderColor: '#cbd5e1',
+                                    borderWidth: 1,
+                                    borderRadius: 6,
+                                    rich: {
+                                        title: { color: '#ffffff', align: 'center', fontFamily: 'Vazirmatn', padding: [4, 0], fontWeight: 'bold' },
+                                        abg: { backgroundColor: '#1e293b', width: '100%', align: 'right', height: 26, borderRadius: [6, 6, 0, 0] },
+                                        hr: { borderColor: '#cbd5e1', width: '100%', borderWidth: 0.5, height: 0 },
+                                        typeHead: { color: '#64748b', width: 40, align: 'center', fontFamily: 'Vazirmatn', fontSize: 10, padding: [4, 0] },
+                                        type: { width: 40, align: 'center', fontFamily: 'Vazirmatn', color: '#334155', fontSize: 11, padding: [4, 0] },
+                                        valueHead: { color: '#64748b', width: 45, align: 'center', fontFamily: 'Vazirmatn', fontSize: 10, padding: [4, 0] },
+                                        value: { width: 45, align: 'center', fontFamily: 'Vazirmatn', color: '#0f172a', fontWeight: 'bold', padding: [4, 0] },
+                                        rateHead: { color: '#64748b', width: 40, align: 'center', fontFamily: 'Vazirmatn', fontSize: 10, padding: [4, 10, 4, 0] },
+                                        rate: { width: 40, align: 'center', fontFamily: 'Vazirmatn', color: '#0f172a', fontWeight: 'bold', padding: [4, 10, 4, 0] }
+                                    }
+                                }
+                            },
                             { value: constr, name: 'احداثی' },
                             { value: live, name: 'لوازم معیشتی' }
                         ],
@@ -592,54 +603,56 @@
 
         if (typeof ApexCharts === 'undefined') return;
 
-        let pct1 = r1 > 0 ? Math.min(Math.round((pr1 / r1) * 100), 100) : 0;
-        let pct2 = r2 > 0 ? Math.min(Math.round((pr2 / r2) * 100), 100) : 0;
-        let pct3 = r3 > 0 ? Math.min(Math.round((pr3 / r3) * 100), 100) : 0;
-
+        // کد جدید مربوط به نمودار دایره‌ای بخش اقدامات میدانی و عملیاتی
         new ApexCharts(document.querySelector("#performanceChart"), {
-            chart: { type: 'radialBar', height: 240 },
-            series: [pct1, pct2, pct3],
-            labels: ['نوع ۱ ', 'نوع ۲ (جزئی)', 'نوع ۳ (درب و پنجره)'],
+            chart: { 
+                type: 'pie', 
+                height: 240,
+                fontFamily: 'Vazirmatn'
+            },
+            series: [pr1, pr2, pr3],
+            labels: ['نوع ۱', 'نوع ۲ (جزئی)', 'نوع ۳ (درب و پنجره)'],
             colors: ['#a855f7', '#14b8a6', '#3b82f6'],
-            plotOptions: {
-                radialBar: {
-                    hollow: { size: '38%' },
-                    track: { background: '#f1f5f9', strokeWidth: '100%' },
-                    dataLabels: {
-                        name: { show: false },
-                        value: { show: true, fontSize: '14px', fontFamily: 'inherit', fontWeight: '800', color: '#0f172a', offsetY: -2 },
-                        total: {
-                            show: true,
-                            label: '',
-                            color: '#0f172a',
-                            fontFamily: 'inherit',
-                            fontWeight: '800',
-                            fontSize: '16px',
-                            formatter: function () {
-                                let totalNeed = r1 + r2 + r3;
-                                if(totalNeed === 0) return '۰٪';
-                                return Math.round((repaired / totalNeed) * 100).toLocaleString('fa-IR') + '٪';
-                            }
-                        }
-                    }
-                }
+            stroke: {
+                show: true,
+                colors: ['#ffffff'],
+                width: 2
+            },
+            dataLabels: {
+                enabled: true,
+                style: {
+                    fontFamily: 'Vazirmatn',
+                    fontSize: '13px',
+                    fontWeight: '800',
+                    colors: ['#ffffff']
+                },
+                background: {
+                    enabled: true,
+                    foreColor: '#ffffff',
+                    padding: 4,
+                    borderRadius: 4,
+                    borderWidth: 0,
+                    opacity: 0.2
+                },
+                formatter: function (val, opts) {
+                    // نمایش عدد واقعی و دقیق به زبان فارسی در داخل نمودار
+                    return opts.w.config.series[opts.seriesIndex].toLocaleString('fa-IR');
+                },
+                dropShadow: { enabled: false }
             },
             legend: {
                 show: true, 
                 position: 'bottom', 
-                fontFamily: 'inherit', 
+                fontFamily: 'Vazirmatn', 
                 fontSize: '11px', 
-                labels: { colors: '#334155' },
-                markers: {
-                    show: true,
-                    width: 12,
-                    height: 12,
-                    radius: 12
-                },
-                formatter: function(seriesName, opts) {
-                    const exactVals = [pr1, pr2, pr3];
-                    const currentVal = (opts && opts.seriesIndex !== undefined) ? exactVals[opts.seriesIndex] : 0;
-                    return seriesName + ': ' + currentVal.toLocaleString('fa-IR') + ' واحد';
+                labels: { colors: '#334155' }
+            },
+            tooltip: {
+                style: { fontFamily: 'Vazirmatn', fontSize: '12px' },
+                y: {
+                    formatter: function(val) {
+                        return val.toLocaleString('fa-IR') + ' واحد';
+                    }
                 }
             }
         }).render();
