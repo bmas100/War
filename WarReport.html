@@ -382,41 +382,6 @@
         return String(v).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
     }
 
-    function normalizeKey(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/[\r\n\s\u200c\u200b]+/g, '')
-            .replace(/ی/g, 'ی').replace(/ي/g, 'ی')
-            .replace(/ک/g, 'ک').replace(/ك/g, 'ک')
-            .replace(/ة/g, 'ه').replace(/آ/g, 'ا')
-            .trim().toLowerCase();
-    }
-
-    function findValueByKeywords(dataObj, keywordsArray, excludeKeywords = []) {
-        for (let rawKey in dataObj) {
-            let normKey = normalizeKey(rawKey);
-            let matchesAll = keywordsArray.every(kw => normKey.includes(normalizeKey(kw)));
-            let matchesNoneOfExclude = excludeKeywords.length === 0 || !excludeKeywords.some(kw => normKey.includes(normalizeKey(kw)));
-            if (matchesAll && matchesNoneOfExclude) return dataObj[rawKey];
-        }
-        return 0;
-    }
-
-    function processSheetToMap(sheet) {
-        const obj = {};
-        if (!sheet) return obj;
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        if (!rows || rows.length < 2) return obj;
-        
-        const headers = rows[0];
-        const values = rows[1] || []; 
-        
-        headers.forEach((h, idx) => { 
-            if (h !== undefined && h !== null) obj[h] = values[idx]; 
-        });
-        return obj;
-    }
-
     async function loadExcel() {
         let workbook;
         try {
@@ -426,58 +391,67 @@
             workbook = XLSX.read(buffer, { type: 'array' });
         } catch (err) {
             console.error(err);
-            alert("خطا در خواندن اطلاعات!");
+            alert("خطا در خواندن اطلاعات اکسل!");
             return;
         }
 
         try {
-            const eData = processSheetToMap(workbook.Sheets['ارزیابی']);
-            const pData = processSheetToMap(workbook.Sheets['عملکرد']);
-            const permData = processSheetToMap(workbook.Sheets['پروانه ساختمانی']);
-            renderUI(eData, pData, permData);
+            const sheet = workbook.Sheets['WarReport'];
+            if (!sheet) {
+                console.warn("شیت WarReport یافت نشد.");
+                alert("شیت 'WarReport' در فایل اکسل پیدا نشد. لطفا فایل را بررسی کنید.");
+                return;
+            }
+            
+            // استخراج داده‌ها بر اساس نام ستون‌ها (A, B, C...)
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: "A", defval: null });
+            
+            // فرض بر این است که ردیف اول هدر است و داده در ردیف دوم قرار دارد (ایندکس ۱)
+            const data = rows.length > 1 ? rows[1] : (rows[0] || {});
+
+            renderUI(data);
         } catch (err) {
             console.error("رندر با خطا مواجه شد:", err);
             alert("داده‌ها با موفقیت فراخوانی شدند، اما در زمان ترسیم مشکلی رخ داد: " + err.message);
         }
     }
 
-    function renderUI(e, p, perm) {
-        const provinces = cleanValue(findValueByKeywords(e, ['استان']));
-        const cities    = cleanValue(findValueByKeywords(e, ['شهرهای']));
-        const villages  = cleanValue(findValueByKeywords(e, ['روستا'], ['سایر', '+']));
-        const r1        = cleanValue(findValueByKeywords(e, ['تعمیری', '1']));
-        const r2        = cleanValue(findValueByKeywords(e, ['تعمیری', '2']));
-        const r3        = cleanValue(findValueByKeywords(e, ['تعمیری', '3']));
-        const rTot      = cleanValue(findValueByKeywords(e, ['جمع', 'تعمیری']));
-        const constr    = cleanValue(findValueByKeywords(e, ['احداثی'], ['تعمیری', '+', 'سایر', 'کلان']));
-        const live      = cleanValue(findValueByKeywords(e, ['معیشتی'], ['تعمیری', '+', 'سایر', 'کلان']));
-        const others    = cleanValue(findValueByKeywords(e, ['سایر']));
+    function renderUI(data) {
+        const provinces = 24; 
+        const cities    = cleanValue(data['D']);
+        const villages  = cleanValue(data['E']);
+        const r1        = cleanValue(data['F']);
+        const r2        = cleanValue(data['G']);
+        const r3        = cleanValue(data['H']);
+        const rTot      = cleanValue(data['K']);
+        const constr    = cleanValue(data['I']);
+        const live      = cleanValue(data['J']);
+        const others    = cleanValue(data['L']);
         
-        const metros    = cleanValue(findValueByKeywords(e, ['کلان', 'شهرها'], ['روستا']));
-        const grandTotal= cleanValue(findValueByKeywords(e, ['کلان', 'شهر', '+', 'روستا']));
+        const metros    = cleanValue(data['M']);
+        const grandTotal= cleanValue(data['N']);
         
-        const dateEval  = findValueByKeywords(e, ['تاریخ']) || '-';
+        const dateEval  = data['C'] ? data['C'] : '-';
 
-        const debris   = cleanValue(findValueByKeywords(p, ['آواربرداری']));
-        const permits  = cleanValue(findValueByKeywords(p, ['طراحی', 'پروانه']));
-        const pr1      = cleanValue(findValueByKeywords(p, ['تعمیرات', '1']));
-        const pr2      = cleanValue(findValueByKeywords(p, ['تعمیرات', '2']));
-        const pr3      = cleanValue(findValueByKeywords(p, ['تعمیرات', '3']));
-        const repaired = cleanValue(findValueByKeywords(p, ['واحدهای', 'تعمیر', 'شده']));
-        const ministry = cleanValue(findValueByKeywords(p, ['وزارت', 'راه']));
-        const branch   = cleanValue(findValueByKeywords(p, ['انتخاب', 'شعبه'])); 
-        const deposit  = cleanValue(findValueByKeywords(p, ['ودیعه']));
-        const cBudget  = cleanValue(findValueByKeywords(p, ['اعتبار', 'احداثی']));
-        const rBudget  = cleanValue(findValueByKeywords(p, ['اعتبار', 'تعمیری']));
-        const tBudget  = cleanValue(findValueByKeywords(p, ['کل', 'اعتبار']));
-        const loan     = cleanValue(findValueByKeywords(p, ['میلیارد']));
-        const datePerf = findValueByKeywords(p, ['تاریخ']) || '-';
+        const debris   = cleanValue(data['R']);
+        const permits  = cleanValue(data['AC']); 
+        const pr1      = cleanValue(data['S']);
+        const pr2      = cleanValue(data['T']);
+        const pr3      = cleanValue(data['U']);
+        const repaired = cleanValue(data['V']);
+        const ministry = cleanValue(data['W']);
+        const deposit  = cleanValue(data['X']);
+        const cBudget  = cleanValue(data['P']);
+        const rBudget  = cleanValue(data['Q']);
+        const tBudget  = cleanValue(data['O']);
+        const loan     = cleanValue(data['Y']);
+        const datePerf = data['C'] ? data['C'] : '-';
 
-        const pmEng    = cleanValue(findValueByKeywords(perm, ['نظام', 'مهندسی']));
-        const pmMap    = cleanValue(findValueByKeywords(perm, ['نقشه']));
-        const pmMunic  = cleanValue(findValueByKeywords(perm, ['شهرداری']));
-        const pmIssued = cleanValue(findValueByKeywords(perm, ['پروانه', 'صادر']));
-        const datePerm = findValueByKeywords(perm, ['تاریخ']) || '-';
+        const pmEng    = cleanValue(data['Z']);
+        const pmMap    = cleanValue(data['AA']);
+        const pmMunic  = cleanValue(data['AB']);
+        const pmIssued = cleanValue(data['AC']);
+        const datePerm = data['C'] ? data['C'] : '-';
 
         document.getElementById('top-grand-total').innerText = fa(grandTotal);
         document.getElementById('top-budget').innerText = fa(tBudget, true) + ' همت';
@@ -595,7 +569,6 @@
             };
             typeChart.setOption(optionType);
             
-            // نمودار اقدامات میدانی و عملیاتی با ECharts برای امکان درج لیبل بیرون از دایره
             let performanceChartDom = document.getElementById('performanceChart');
             performanceChartDom.style.height = "255px";
             let performanceChart = echarts.init(performanceChartDom);
@@ -612,7 +585,7 @@
                     data: ['نوع ۱', 'نوع ۲ (جزئی)', 'نوع ۳ (درب و پنجره)'],
                     textStyle: { fontFamily: 'Vazirmatn', fontSize: 11 }
                 },
-                color: ['#8b5cf6', '#f97316', '#06b6d4'], // استفاده از ۳ رنگ متمایز (بنفش، نارنجی، فیروزه‌ای)
+                color: ['#8b5cf6', '#f97316', '#06b6d4'],
                 series: [
                     {
                         type: 'pie',
@@ -626,7 +599,7 @@
                         label: {
                             show: true,
                             position: 'outside',
-                            color: '#000000', // رنگ فونت مشکی
+                            color: '#000000',
                             fontFamily: 'Vazirmatn',
                             fontSize: 10,
                             formatter: function(params) {
