@@ -495,15 +495,32 @@
         return 0;
     }
 
-    function processSheetToMap(sheet, rowIndex) {
+    // تغییر مهم شماره ۱: جستجو مستقیماً بر اساس مقدار پارامتر در ستون A انجام می‌شود
+    function processSheetToMap(sheet, targetU) {
         const obj = {};
         if (!sheet) return obj;
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        if (!rows || rows.length <= rowIndex) return obj;
+        if (!rows || rows.length < 2) return obj;
         
         const headers = rows[0];
-        const values = rows[rowIndex] || []; 
+        let values = []; 
         
+        // اسکن کردن سطرها برای پیدا کردن مقدار برابر با پارامتر در ستون A (ایندکس 0)
+        for (let i = 1; i < rows.length; i++) {
+            if (rows[i] && rows[i][0] !== undefined) {
+                let rowU = parseInt(rows[i][0], 10);
+                if (rowU === targetU) {
+                    values = rows[i];
+                    break;
+                }
+            }
+        }
+        
+        // اگر هیچ مقداری با این پارامتر پیدا نشد (یا پارامتر وارد نشده بود)، سطر اول اطلاعات را به عنوان پیش‌فرض قرار می‌دهیم
+        if (values.length === 0 && rows.length > 1) {
+            values = rows[1] || [];
+        }
+
         headers.forEach((h, idx) => { 
             if (h !== undefined && h !== null) obj[h] = values[idx]; 
         });
@@ -514,17 +531,21 @@
         return obj;
     }
 
+    // تغییر مهم شماره ۲: استخراج لیست استان‌ها دقیقاً با خواندن ستون A
     function extractProvincesList(sheet) {
         const list = [];
         if (!sheet) return list;
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
         
-        // شروع از ایندکس ۲ (متناظر با u=1 و سطر سوم اکسل)
-        // ایندکس ۱ معادل u=0 یعنی گزارش کلی است که در دکمه مجزا قرار می‌گیرد
-        for (let i = 2; i < rows.length; i++) {
-            if (rows[i] && rows[i][1] !== undefined) {
-                let id = rows[i][0] !== undefined ? rows[i][0] : (i - 1);
-                list.push({ id: id, name: rows[i][1] });
+        for (let i = 1; i < rows.length; i++) {
+            if (rows[i] && rows[i][0] !== undefined && rows[i][1] !== undefined) {
+                let uVal = parseInt(rows[i][0], 10);
+                let provName = rows[i][1];
+                
+                // مقادیر نامعتبر و گزارش کلی (u=0) را فیلتر می‌کنیم
+                if (!isNaN(uVal) && uVal > 0 && String(provName).trim() !== '') {
+                    list.push({ id: uVal, name: provName });
+                }
             }
         }
         return list;
@@ -570,14 +591,11 @@
     }
 
     async function loadExcel() {
-        // خواندن پارامتر u از آدرس
         const urlParams = new URLSearchParams(window.location.search);
         let uParam = urlParams.get('u');
         let x = parseInt(uParam, 10);
-        if (isNaN(x)) x = 0; // اگر پارامتری نبود صفر در نظر بگیرد
+        if (isNaN(x)) x = 0; 
         
-        let targetRowIndex = x + 1; // x=0 -> ایندکس 1 در آرایه (سطر 2 اکسل)، x=8 -> ایندکس 9 در آرایه (سطر 10 اکسل)
-
         let workbook;
         try {
             const response = await fetch('./WarReport.xlsx');
@@ -586,25 +604,25 @@
             workbook = XLSX.read(buffer, { type: 'array' });
         } catch (err) {
             console.error(err);
-            alert("خطا در خواندن اطلاعات!");
+            alert("خطا در خواندن فایل اکسل!");
             return;
         }
 
         try {
-            const evalSheet = workbook.Sheets['ارزیابی'] || workbook.Sheets[workbook.SheetNames[0]];
+            // تغییر مهم شماره ۳: خواندن اطلاعات یکپارچه صرفاً از شیت WarReport
+            const targetSheet = workbook.Sheets['WarReport'] || workbook.Sheets[workbook.SheetNames[0]];
             
-            const eData = processSheetToMap(workbook.Sheets['ارزیابی'], targetRowIndex);
-            const pData = processSheetToMap(workbook.Sheets['عملکرد'], targetRowIndex);
-            const permData = processSheetToMap(workbook.Sheets['پروانه ساختمانی'], targetRowIndex);
+            // تولید آبجکت نهایی (برای هر سه بخش ارزیابی، عملکرد و پروانه از همین دیتای تجمیع شده استفاده می‌شود)
+            const unifiedData = processSheetToMap(targetSheet, x);
             
             try {
-                let provincesList = extractProvincesList(evalSheet);
+                let provincesList = extractProvincesList(targetSheet);
                 renderProvincesList(provincesList);
             } catch (ep) {
                 console.error("خطا در استخراج لیست استان‌ها", ep);
             }
 
-            renderUI(eData, pData, permData, x);
+            renderUI(unifiedData, unifiedData, unifiedData, x);
         } catch (err) {
             console.error("رندر با خطا مواجه شد:", err);
             alert("داده‌ها با موفقیت فراخوانی شدند، اما در زمان ترسیم مشکلی رخ داد: " + err.message);
@@ -613,9 +631,8 @@
 
     function renderUI(e, p, perm, x) {
         
-        // نام استان در بنر را از ستون دوم دریافت می‌کند
         let bannerProvName = e['_provName'];
-        if (!bannerProvName) {
+        if (!bannerProvName || bannerProvName.toString().trim() === '') {
             bannerProvName = (x === 0) ? "گزارش کلی" : "استان نامشخص";
         }
         document.getElementById('banner-prov-name').innerText = bannerProvName;
@@ -643,7 +660,6 @@
         const pr3      = cleanValue(findValueByKeywords(p, ['تعمیرات', '3']));
         const repaired = cleanValue(findValueByKeywords(p, ['واحدهای', 'تعمیر', 'شده']));
         const ministry = cleanValue(findValueByKeywords(p, ['وزارت', 'راه']));
-        const branch   = cleanValue(findValueByKeywords(p, ['انتخاب', 'شعبه'])); 
         const deposit  = cleanValue(findValueByKeywords(p, ['ودیعه']));
         
         let cBudget  = cleanValue(findValueByKeywords(p, ['اعتبار', 'احداثی'])) / 10000000000000;
@@ -742,7 +758,6 @@
                                 label: {
                                     formatter: [
                                         '{title|{b}}{abg|}',
-                                        
                                         `  {type|نوع ۱}{value|${fa(r1)}}{rate|${fa(getP(r1))}٪}`,
                                         `  {type|نوع ۲}{value|${fa(r2)}}{rate|${fa(getP(r2))}٪}`,
                                         `  {type|نوع ۳}{value|${fa(r3)}}{rate|${fa(getP(r3))}٪}`
