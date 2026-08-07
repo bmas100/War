@@ -402,7 +402,7 @@
                     </div>
                     <div class="data-item">
                         <div class="data-icon bg-indigo"><i class="fa-solid fa-credit-card"></i></div>
-                        <div class="data-info"><div class="data-label">تسهیلات پرداختی (م.ر)</div><div class="data-value" id="p-loan">۰</div></div>
+                        <div class="data-info"><div class="data-label">تسهیلات پرداختی (م.ت)</div><div class="data-value" id="p-loan">۰</div></div>
                     </div>
                 </div>
                 <div class="strip-container">
@@ -462,14 +462,15 @@
         return isNaN(num) ? 0 : num;
     }
 
-    // تابع تشخیص و تبدیل هوشمند به همت (عدم گرد کردن و جلوگیری از صفر شدن)
+    // تابع تشخیص و تبدیل هوشمند به همت بر اساس ورودی میلیون ریال
     function getHemmat(val) {
         let v = cleanValue(val);
-        // اگر عدد بزرگتر از 1 میلیون است (احتمالاً به ریال وارد شده)، آن را به همت تبدیل می‌کنیم
-        if (v > 1000000) {
-            return v / 10000000000000;
+        // اعداد در فایل اکسل به میلیون ریال هستند.
+        // هر همت معادل ۱۰,۰۰۰,۰۰۰ میلیون ریال است.
+        if (v > 1000) { 
+            return v / 10000000;
         }
-        // اگر عدد کوچک است (مثلاً 2.5)، یعنی کاربر از ابتدا خودش به همت وارد کرده، پس دستکاری نمی‌کنیم
+        // اگر عدد کوچک است یعنی کاربر از ابتدا خودش به همت وارد کرده، پس دستکاری نمی‌کنیم
         return v;
     }
 
@@ -629,7 +630,7 @@
         const repaired = cleanValue(row[21]); // ستون V
         const ministry = cleanValue(row[22]); // ستون W
         const deposit  = cleanValue(row[23]); // ستون X
-        const loan     = cleanValue(row[24]); // ستون Y (وام‌ها رند نمی‌شوند)
+        const loan     = cleanValue(row[24]); // ستون Y (مستقیما به میلیارد تومان نمایش داده می‌شود)
         
         const permits  = cleanValue(row[28]); // ستون AC
         const datePerf = row[2] || '-'; // ستون C
