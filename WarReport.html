@@ -54,7 +54,6 @@
         .glass-widget .w-label { font-size: 12px; color: #f8fafc; font-weight: 700; margin-bottom: 2px; text-shadow: 0 2px 2px rgba(0,0,0,0.2);}
         .glass-widget .w-val { font-size: 19px; font-weight: 800; color: #f0fc62; margin-top: 5px; text-shadow: 0 2px 2px rgba(0,0,0,0.2); }
 
-        /* استایل کارت ویژه (استان‌ها) */
         .special-widget {
             background: rgba(249, 115, 22, 0.25);
             border-color: rgba(249, 115, 22, 0.4);
@@ -68,7 +67,6 @@
         .special-widget svg { color: #fdba74 !important; }
         .special-widget .w-val { color: #ffffff !important; }
 
-        /* Infographics/Charts Grid (Compact for 1 row) */
         .infographic-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
         .panel { background: #ffffff; border-radius: 20px; padding: 10px; box-shadow: 0 4px 15px rgba(15,23,42,0.03); border: 1px solid #e2e8f0; min-width: 0; }
         .panel-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #0f172a; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
@@ -132,7 +130,6 @@
         .strip-title-wrapper svg { font-size: 18px; }
         .strip-val { font-size: 19px; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
 
-        /* استایل‌های مودال */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px);
@@ -172,8 +169,6 @@
             background: #ea580c; color: #ffffff; border-color: #ea580c;
             transform: translateY(-2px); box-shadow: 0 4px 10px rgba(234, 88, 12, 0.2);
         }
-        
-        /* دکمه اختصاصی گزارش کلی */
         .all-report-btn {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, #0f172a, #1e3a8a) !important;
@@ -460,78 +455,54 @@
 
 <script>
     function cleanValue(v) {
-        if(v === undefined || v === null) return 0;
+        if(v === undefined || v === null || String(v).trim() === '') return 0;
         if(typeof v === 'number') return v;
         let s = String(v).replace(/,/g, '').replace(/،/g, '.').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^\d.-]/g, '');
         let num = parseFloat(s);
         return isNaN(num) ? 0 : num;
     }
 
+    // تابع تشخیص و تبدیل هوشمند به همت (عدم گرد کردن و جلوگیری از صفر شدن)
+    function getHemmat(val) {
+        let v = cleanValue(val);
+        // اگر عدد بزرگتر از 1 میلیون است (احتمالاً به ریال وارد شده)، آن را به همت تبدیل می‌کنیم
+        if (v > 1000000) {
+            return v / 10000000000000;
+        }
+        // اگر عدد کوچک است (مثلاً 2.5)، یعنی کاربر از ابتدا خودش به همت وارد کرده، پس دستکاری نمی‌کنیم
+        return v;
+    }
+
+    // تابع فرمت‌دهی با دقت بالا جهت جلوگیری از رند شدن اعداد
     function fa(v, isFloat = false) {
         if(v === undefined || v === null) return '۰';
         if(typeof v === 'number') {
-            return isFloat ? v.toLocaleString('fa-IR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : v.toLocaleString('fa-IR');
+            // برای مبالغ همت اجازه نمایش تا 4 رقم اعشار دقیق را می‌دهیم
+            return isFloat ? v.toLocaleString('fa-IR', {minimumFractionDigits: 0, maximumFractionDigits: 4}) : v.toLocaleString('fa-IR', {maximumFractionDigits: 0});
         }
         return String(v).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
     }
 
-    function normalizeKey(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/[\r\n\s\u200c\u200b]+/g, '')
-            .replace(/ی/g, 'ی').replace(/ي/g, 'ی')
-            .replace(/ک/g, 'ک').replace(/ك/g, 'ک')
-            .replace(/ة/g, 'ه').replace(/آ/g, 'ا')
-            .trim().toLowerCase();
-    }
-
-    function findValueByKeywords(dataObj, keywordsArray, excludeKeywords = []) {
-        for (let rawKey in dataObj) {
-            let normKey = normalizeKey(rawKey);
-            let matchesAll = keywordsArray.every(kw => normKey.includes(normalizeKey(kw)));
-            let matchesNoneOfExclude = excludeKeywords.length === 0 || !excludeKeywords.some(kw => normKey.includes(normalizeKey(kw)));
-            if (matchesAll && matchesNoneOfExclude) return dataObj[rawKey];
-        }
-        return 0;
-    }
-
-    // تغییر مهم شماره ۱: جستجو مستقیماً بر اساس مقدار پارامتر در ستون A انجام می‌شود
-    function processSheetToMap(sheet, targetU) {
-        const obj = {};
-        if (!sheet) return obj;
+    // استخراج مستقیم ردیف دیتا بر اساس شماره پارامتر
+    function getRowData(sheet, targetU) {
+        if (!sheet) return [];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        if (!rows || rows.length < 2) return obj;
-        
-        const headers = rows[0];
-        let values = []; 
-        
-        // اسکن کردن سطرها برای پیدا کردن مقدار برابر با پارامتر در ستون A (ایندکس 0)
+        if (!rows || rows.length < 2) return [];
+
         for (let i = 1; i < rows.length; i++) {
             if (rows[i] && rows[i][0] !== undefined) {
                 let rowU = parseInt(rows[i][0], 10);
                 if (rowU === targetU) {
-                    values = rows[i];
-                    break;
+                    return rows[i]; 
                 }
             }
         }
         
-        // اگر هیچ مقداری با این پارامتر پیدا نشد (یا پارامتر وارد نشده بود)، سطر اول اطلاعات را به عنوان پیش‌فرض قرار می‌دهیم
-        if (values.length === 0 && rows.length > 1) {
-            values = rows[1] || [];
-        }
-
-        headers.forEach((h, idx) => { 
-            if (h !== undefined && h !== null) obj[h] = values[idx]; 
-        });
-        
-        // ذخیره نام استان از ستون دوم (ایندکس ۱) جهت نمایش در بنر
-        obj['_provName'] = values[1];
-        
-        return obj;
+        // اگر پیدا نشد، سطر پیش‌فرض را برگردان
+        if (rows.length > 1) return rows[1] || [];
+        return [];
     }
 
-    // تغییر مهم شماره ۲: استخراج لیست استان‌ها دقیقاً با خواندن ستون A
     function extractProvincesList(sheet) {
         const list = [];
         if (!sheet) return list;
@@ -541,8 +512,6 @@
             if (rows[i] && rows[i][0] !== undefined && rows[i][1] !== undefined) {
                 let uVal = parseInt(rows[i][0], 10);
                 let provName = rows[i][1];
-                
-                // مقادیر نامعتبر و گزارش کلی (u=0) را فیلتر می‌کنیم
                 if (!isNaN(uVal) && uVal > 0 && String(provName).trim() !== '') {
                     list.push({ id: uVal, name: provName });
                 }
@@ -556,18 +525,16 @@
         if(!container) return;
         container.innerHTML = '';
         
-        // دکمه ویژه و تمام عرض برای گزارش کلی (u=0)
         const btnAll = document.createElement('a');
         btnAll.className = 'prov-btn all-report-btn';
-        btnAll.href = `?u=0`; // رفرش همین صفحه با پارامتر 0
+        btnAll.href = `?u=0`; 
         btnAll.innerHTML = '<i class="fa-solid fa-chart-line" style="margin-left: 8px;"></i> گزارش کلی بازسازی جنگ';
         container.appendChild(btnAll);
 
-        // سایر استان‌ها
         list.forEach(prov => {
             const a = document.createElement('a');
             a.className = 'prov-btn';
-            a.href = `?u=${prov.id}`; // رفرش همین صفحه با پارامتر متناظر استان
+            a.href = `?u=${prov.id}`;
             a.innerText = prov.name;
             container.appendChild(a);
         });
@@ -609,11 +576,8 @@
         }
 
         try {
-            // تغییر مهم شماره ۳: خواندن اطلاعات یکپارچه صرفاً از شیت WarReport
             const targetSheet = workbook.Sheets['WarReport'] || workbook.Sheets[workbook.SheetNames[0]];
-            
-            // تولید آبجکت نهایی (برای هر سه بخش ارزیابی، عملکرد و پروانه از همین دیتای تجمیع شده استفاده می‌شود)
-            const unifiedData = processSheetToMap(targetSheet, x);
+            const rowData = getRowData(targetSheet, x);
             
             try {
                 let provincesList = extractProvincesList(targetSheet);
@@ -622,59 +586,62 @@
                 console.error("خطا در استخراج لیست استان‌ها", ep);
             }
 
-            renderUI(unifiedData, unifiedData, unifiedData, x);
+            renderUI(rowData, x);
         } catch (err) {
             console.error("رندر با خطا مواجه شد:", err);
             alert("داده‌ها با موفقیت فراخوانی شدند، اما در زمان ترسیم مشکلی رخ داد: " + err.message);
         }
     }
 
-    function renderUI(e, p, perm, x) {
+    function renderUI(row, x) {
         
-        let bannerProvName = e['_provName'];
+        // نام استان از ستون B (ایندکس ۱)
+        let bannerProvName = row[1];
         if (!bannerProvName || bannerProvName.toString().trim() === '') {
             bannerProvName = (x === 0) ? "گزارش کلی" : "استان نامشخص";
         }
         document.getElementById('banner-prov-name').innerText = bannerProvName;
 
-        const provinces = cleanValue(findValueByKeywords(e, ['استان']));
-        const cities    = cleanValue(findValueByKeywords(e, ['شهرهای']));
-        const villages  = cleanValue(findValueByKeywords(e, ['روستا'], ['سایر', '+']));
-        const r1        = cleanValue(findValueByKeywords(e, ['تعمیری', '1']));
-        const r2        = cleanValue(findValueByKeywords(e, ['تعمیری', '2']));
-        const r3        = cleanValue(findValueByKeywords(e, ['تعمیری', '3']));
-        const rTot      = cleanValue(findValueByKeywords(e, ['جمع', 'تعمیری']));
-        const constr    = cleanValue(findValueByKeywords(e, ['احداثی'], ['تعمیری', '+', 'سایر', 'کلان']));
-        const live      = cleanValue(findValueByKeywords(e, ['معیشتی'], ['تعمیری', '+', 'سایر', 'کلان']));
-        const others    = cleanValue(findValueByKeywords(e, ['سایر']));
+        // مپینگ دقیق ستون‌های ارزیابی بر اساس الگو
+        const provinces = 24; // عدد ثابت 24 طبق دستور
+        const cities    = cleanValue(row[3]);  // ستون D
+        const villages  = cleanValue(row[4]);  // ستون E
+        const r1        = cleanValue(row[5]);  // ستون F
+        const r2        = cleanValue(row[6]);  // ستون G
+        const r3        = cleanValue(row[7]);  // ستون H
+        const constr    = cleanValue(row[8]);  // ستون I
+        const live      = cleanValue(row[9]);  // ستون J
+        const rTot      = cleanValue(row[10]); // ستون K
+        const others    = cleanValue(row[11]); // ستون L
+        const metros    = cleanValue(row[12]); // ستون M
+        const grandTotal= cleanValue(row[13]); // ستون N
         
-        const metros    = cleanValue(findValueByKeywords(e, ['کلان', 'شهرها'], ['روستا']));
-        const grandTotal= cleanValue(findValueByKeywords(e, ['کلان', 'شهر', '+', 'روستا']));
-        
-        const dateEval  = findValueByKeywords(e, ['تاریخ']) || '-';
+        const dateEval  = row[2] || '-'; // ستون C (تاریخ)
 
-        const debris   = cleanValue(findValueByKeywords(p, ['آواربرداری']));
-        const permits  = cleanValue(findValueByKeywords(p, ['طراحی', 'پروانه']));
-        const pr1      = cleanValue(findValueByKeywords(p, ['تعمیرات', '1']));
-        const pr2      = cleanValue(findValueByKeywords(p, ['تعمیرات', '2']));
-        const pr3      = cleanValue(findValueByKeywords(p, ['تعمیرات', '3']));
-        const repaired = cleanValue(findValueByKeywords(p, ['واحدهای', 'تعمیر', 'شده']));
-        const ministry = cleanValue(findValueByKeywords(p, ['وزارت', 'راه']));
-        const deposit  = cleanValue(findValueByKeywords(p, ['ودیعه']));
+        // مپینگ دقیق ستون‌های عملکرد بر اساس الگو
+        const tBudget  = getHemmat(row[14]); // ستون O
+        const cBudget  = getHemmat(row[15]); // ستون P
+        const rBudget  = getHemmat(row[16]); // ستون Q
+        const debris   = cleanValue(row[17]); // ستون R
+        const pr1      = cleanValue(row[18]); // ستون S
+        const pr2      = cleanValue(row[19]); // ستون T
+        const pr3      = cleanValue(row[20]); // ستون U
+        const repaired = cleanValue(row[21]); // ستون V
+        const ministry = cleanValue(row[22]); // ستون W
+        const deposit  = cleanValue(row[23]); // ستون X
+        const loan     = cleanValue(row[24]); // ستون Y (وام‌ها رند نمی‌شوند)
         
-        let cBudget  = cleanValue(findValueByKeywords(p, ['اعتبار', 'احداثی'])) / 10000000000000;
-        let rBudget  = cleanValue(findValueByKeywords(p, ['اعتبار', 'تعمیری'])) / 10000000000000;
-        let tBudget  = cleanValue(findValueByKeywords(p, ['کل', 'اعتبار'])) / 10000000000000;
-        
-        const loan     = cleanValue(findValueByKeywords(p, ['میلیارد']));
-        const datePerf = findValueByKeywords(p, ['تاریخ']) || '-';
+        const permits  = cleanValue(row[28]); // ستون AC
+        const datePerf = row[2] || '-'; // ستون C
 
-        const pmEng    = cleanValue(findValueByKeywords(perm, ['نظام', 'مهندسی']));
-        const pmMap    = cleanValue(findValueByKeywords(perm, ['نقشه']));
-        const pmMunic  = cleanValue(findValueByKeywords(perm, ['شهرداری']));
-        const pmIssued = cleanValue(findValueByKeywords(perm, ['پروانه', 'صادر']));
-        const datePerm = findValueByKeywords(perm, ['تاریخ']) || '-';
+        // مپینگ دقیق ستون‌های پروانه بر اساس الگو
+        const pmEng    = cleanValue(row[25]); // ستون Z
+        const pmMap    = cleanValue(row[26]); // ستون AA
+        const pmMunic  = cleanValue(row[27]); // ستون AB
+        const pmIssued = cleanValue(row[28]); // ستون AC
+        const datePerm = row[2] || '-'; // ستون C
 
+        // تزریق مقادیر به المان‌های صفحه
         document.getElementById('top-grand-total').innerText = fa(grandTotal);
         document.getElementById('top-budget').innerText = fa(tBudget, true) + ' همت';
         document.getElementById('top-date').innerText = fa(datePerf);
@@ -858,7 +825,7 @@
             dataLabels: { 
                 enabled: true, 
                 style: { fontFamily: 'inherit', fontSize: '11px', fontWeight: '700' },
-                formatter: function (val) { return val.toLocaleString('fa-IR'); }
+                formatter: function (val) { return fa(val); }
             },
             series: [{ name: 'تعداد فرآیند', data: [pmEng, pmMunic, pmMap, pmIssued] }],
             xaxis: {
@@ -878,7 +845,7 @@
             series: [{ name: 'حجم اعتبار (همت)', data: [cBudget, rBudget, tBudget] }],
             plotOptions: { bar: { borderRadius: 6, columnWidth: '45%', distributed: true } },
             colors: ['#0f766e', '#3b82f6', '#16a34a'],
-            dataLabels: { enabled: true, style: { fontFamily: 'inherit', fontSize: '11px' } },
+            dataLabels: { enabled: true, style: { fontFamily: 'inherit', fontSize: '11px' }, formatter: function (val) { return fa(val, true); } },
             legend: { show: false },
             xaxis: {
                 categories: ['اعتبار احداثی', 'اعتبار تعمیری', 'کل اعتبارات پروژه'],
