@@ -479,7 +479,7 @@
         if(v === undefined || v === null) return '۰';
         if(typeof v === 'number') {
             // برای مبالغ همت اجازه نمایش تا 4 رقم اعشار دقیق را می‌دهیم
-            return isFloat ? v.toLocaleString('fa-IR', {minimumFractionDigits: 0, maximumFractionDigits: 4}) : v.toLocaleString('fa-IR', {maximumFractionDigits: 0});
+            return isFloat ? v.toLocaleString('fa-IR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : v.toLocaleString('fa-IR', {maximumFractionDigits: 0});
         }
         return String(v).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
     }
