@@ -691,7 +691,10 @@
         document.querySelector("#permitChart").innerHTML = "";
         document.querySelector("#budgetChart").innerHTML = "";
 
-        if (typeof echarts !== 'undefined') {
+if (typeof echarts !== 'undefined') {
+            // ==========================================
+            // نمودار اول: ارزیابی آسیب‌ها و نیازمندی‌ها (اصلاح شده)
+            // ==========================================
             let typeChartDom = document.getElementById('typeChart');
             typeChartDom.style.height = "255px";
             let typeChart = echarts.init(typeChartDom);
@@ -720,7 +723,7 @@
                         center: ['50%', '45%'],
                         selectedMode: 'single',
                         
-                        // تنظیمات پیش‌فرض برای نمایش عدد روی سایر بخش‌ها (احداثی و معیشتی)
+                        // تنظیمات پیش‌فرض برای نمایش عدد روی سایر بخش‌ها
                         label: {
                             show: true,
                             position: 'outside',
@@ -741,7 +744,7 @@
                             {
                                 value: rTotPie,
                                 name: 'جمع تعمیری',
-                                // تنظیم اختصاصی برای "جمع تعمیری" بدون محدودیت عرض (Width)
+                                // تنظیم اختصاصی برای "جمع تعمیری" بدون محدودیت عرض
                                 label: {
                                     show: true,
                                     backgroundColor: '#f8fafc',
@@ -758,7 +761,6 @@
                                     rich: {
                                         title: { color: '#ffffff', align: 'center', fontFamily: 'Vazirmatn', padding: [8, 12], fontWeight: 'bold' },
                                         abg: { backgroundColor: '#1e293b', width: '100%', align: 'right', height: 32, borderRadius: [6, 6, 0, 0] },
-                                        // حذف width برای جلوگیری از قیچی شدن اعداد بزرگ
                                         type: { color: '#475569', fontFamily: 'Vazirmatn', fontSize: 11, padding: [6, 12, 2, 4] },
                                         value: { color: '#0f172a', fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: 'bold', padding: [6, 4, 2, 4] },
                                         rate: { color: '#0284c7', fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: 'bold', padding: [6, 4, 2, 12] }
@@ -768,6 +770,60 @@
                             { value: constr, name: 'احداثی' },
                             { value: live, name: 'لوازم معیشتی' }
                         ],
+                        emphasis: {
+                            itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
+                        }
+                    }
+                ]
+            };
+            typeChart.setOption(optionType);
+            
+            // ==========================================
+            // نمودار دوم: عملکرد و اقدامات میدانی
+            // ==========================================
+            let performanceChartDom = document.getElementById('performanceChart');
+            performanceChartDom.style.height = "255px";
+            let performanceChart = echarts.init(performanceChartDom);
+
+            let optionPerformance = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b} : {c} واحد',
+                    textStyle: { fontFamily: 'Vazirmatn', direction: 'rtl' }
+                },
+                legend: {
+                    bottom: 0,
+                    left: 'center',
+                    data: ['نوع ۱', 'نوع ۲ (جزئی)', 'نوع ۳ (درب و پنجره)'],
+                    textStyle: { fontFamily: 'Vazirmatn', fontSize: 11 }
+                },
+                color: ['#8b5cf6', '#f97316', '#06b6d4'],
+                series: [
+                    {
+                        type: 'pie',
+                        radius: '55%',
+                        center: ['50%', '45%'],
+                        data: [
+                            { value: pr1, name: 'نوع ۱' },
+                            { value: pr2, name: 'نوع ۲ (جزئی)' },
+                            { value: pr3, name: 'نوع ۳ (درب و پنجره)' }
+                        ],
+                        label: {
+                            show: true,
+                            position: 'outside',
+                            color: '#000000',
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 10,
+                            formatter: function(params) {
+                                return params.name + ':\n\n' + fa(params.value) + ' واحد';
+                            }
+                        },
+                        labelLine: {
+                            show: true,
+                            length: 15,
+                            length2: 20,
+                            smooth: true
+                        },
                         emphasis: {
                             itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
                         }
