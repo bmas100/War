@@ -720,7 +720,7 @@
                         center: ['50%', '45%'],
                         selectedMode: 'single',
                         
-                        // --- این بخش برای نمایش اعداد در سایر تکه‌های نمودار اضافه شد ---
+                        // تنظیمات پیش‌فرض برای نمایش عدد روی سایر بخش‌ها (احداثی و معیشتی)
                         label: {
                             show: true,
                             position: 'outside',
@@ -728,7 +728,7 @@
                             fontFamily: 'Vazirmatn',
                             fontSize: 11,
                             formatter: function(params) {
-                                return params.name + ':\n\n' + fa(params.value) + ' واحد';
+                                return params.name + ':\n' + fa(params.value) + ' واحد';
                             }
                         },
                         labelLine: {
@@ -737,34 +737,32 @@
                             length2: 18,
                             smooth: true
                         },
-                        // -------------------------------------------------------------
-
                         data: [
                             {
                                 value: rTotPie,
                                 name: 'جمع تعمیری',
-                                // لیبل اختصاصی زیر همچنان برای بخش "جمع تعمیری" کار می‌کند و جایگزین لیبل بالا می‌شود
+                                // تنظیمات اختصاصی جدول برای بخش "جمع تعمیری"
                                 label: {
-                                    formatter: [
-                                        '{title|{b}}{abg|}',
-                                        `  {type|نوع ۱}{value|${fa(r1)}}{rate|${fa(getP(r1))}٪}`,
-                                        `  {type|نوع ۲}{value|${fa(r2)}}{rate|${fa(getP(r2))}٪}`,
-                                        `  {type|نوع ۳}{value|${fa(r3)}}{rate|${fa(getP(r3))}٪}`
-                                    ].join('\n'),
+                                    show: true,
                                     backgroundColor: '#f8fafc',
                                     borderColor: '#cbd5e1',
                                     borderWidth: 1,
                                     borderRadius: 6,
+                                    padding: [0, 0, 4, 0], // ایجاد فاصله در پایین کادر برای جلوگیری از مخفی شدن اعداد
+                                    formatter: [
+                                        // نمایش عدد کل جمع تعمیری در هدر جدول
+                                        '{title|{b} : ' + fa(rTotPie) + ' واحد}{abg|}',
+                                        // نمایش ردیف‌های نوع 1 تا 3
+                                        `{type|نوع ۱:}{value|${fa(r1)}}{rate|${fa(getP(r1))}٪}`,
+                                        `{type|نوع ۲:}{value|${fa(r2)}}{rate|${fa(getP(r2))}٪}`,
+                                        `{type|نوع ۳:}{value|${fa(r3)}}{rate|${fa(getP(r3))}٪}`
+                                    ].join('\n'),
                                     rich: {
-                                        title: { color: '#ffffff', align: 'center', fontFamily: 'Vazirmatn', padding: [4, 0], fontWeight: 'bold' },
-                                        abg: { backgroundColor: '#1e293b', width: '100%', align: 'right', height: 26, borderRadius: [6, 6, 0, 0] },
-                                        hr: { borderColor: '#cbd5e1', width: '100%', borderWidth: 0.5, height: 0 },
-                                        typeHead: { color: '#64748b', width: 40, align: 'center', fontFamily: 'Vazirmatn', fontSize: 10, padding: [4, 0] },
-                                        type: { width: 40, align: 'center', fontFamily: 'Vazirmatn', color: '#334155', fontSize: 11, padding: [4, 0] },
-                                        valueHead: { color: '#64748b', width: 45, align: 'center', fontFamily: 'Vazirmatn', fontSize: 10, padding: [4, 0] },
-                                        value: { width: 45, align: 'center', fontFamily: 'Vazirmatn', color: '#0f172a', fontWeight: 'bold', padding: [4, 0] },
-                                        rateHead: { color: '#64748b', width: 40, align: 'center', fontFamily: 'Vazirmatn', fontSize: 10, padding: [4, 10, 4, 0] },
-                                        rate: { width: 40, align: 'center', fontFamily: 'Vazirmatn', color: '#0f172a', fontWeight: 'bold', padding: [4, 10, 4, 0] }
+                                        title: { color: '#ffffff', align: 'center', fontFamily: 'Vazirmatn', padding: [6, 10], fontWeight: 'bold' },
+                                        abg: { backgroundColor: '#1e293b', width: '100%', align: 'right', height: 28, borderRadius: [6, 6, 0, 0] },
+                                        type: { width: 45, align: 'right', fontFamily: 'Vazirmatn', color: '#334155', fontSize: 11, padding: [4, 8, 4, 0] },
+                                        value: { width: 40, align: 'center', fontFamily: 'Vazirmatn', color: '#0f172a', fontWeight: 'bold', padding: [4, 0] },
+                                        rate: { width: 35, align: 'left', fontFamily: 'Vazirmatn', color: '#0f172a', fontWeight: 'bold', padding: [4, 0, 4, 8] }
                                     }
                                 }
                             },
@@ -777,6 +775,7 @@
                     }
                 ]
             };
+
             typeChart.setOption(optionType);
             
             let performanceChartDom = document.getElementById('performanceChart');
