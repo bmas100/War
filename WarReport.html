@@ -726,101 +726,48 @@
                             position: 'outside',
                             color: '#0f172a',
                             fontFamily: 'Vazirmatn',
-                            fontSize: 11,
+                            fontSize: 12,
                             formatter: function(params) {
                                 return params.name + ':\n' + fa(params.value) + ' واحد';
                             }
                         },
                         labelLine: {
                             show: true,
-                            length: 12,
-                            length2: 18,
+                            length: 15,
+                            length2: 25,
                             smooth: true
                         },
                         data: [
                             {
                                 value: rTotPie,
                                 name: 'جمع تعمیری',
-                                // تنظیمات اختصاصی جدول برای بخش "جمع تعمیری"
+                                // تنظیم اختصاصی برای "جمع تعمیری" بدون محدودیت عرض (Width)
                                 label: {
                                     show: true,
                                     backgroundColor: '#f8fafc',
                                     borderColor: '#cbd5e1',
                                     borderWidth: 1,
                                     borderRadius: 6,
-                                    padding: [0, 0, 4, 0], // ایجاد فاصله در پایین کادر برای جلوگیری از مخفی شدن اعداد
+                                    padding: [0, 0, 6, 0], 
                                     formatter: [
-                                        // نمایش عدد کل جمع تعمیری در هدر جدول
-                                        '{title|{b} : ' + fa(rTotPie) + ' واحد}{abg|}',
-                                        // نمایش ردیف‌های نوع 1 تا 3
-                                        `{type|نوع ۱:}{value|${fa(r1)}}{rate|${fa(getP(r1))}٪}`,
-                                        `{type|نوع ۲:}{value|${fa(r2)}}{rate|${fa(getP(r2))}٪}`,
-                                        `{type|نوع ۳:}{value|${fa(r3)}}{rate|${fa(getP(r3))}٪}`
+                                        '{title|جمع تعمیری: ' + fa(rTotPie) + ' واحد}{abg|}',
+                                        '{type|نوع ۱:}{value| ' + fa(r1) + ' }{rate|(' + fa(getP(r1)) + '٪)}',
+                                        '{type|نوع ۲:}{value| ' + fa(r2) + ' }{rate|(' + fa(getP(r2)) + '٪)}',
+                                        '{type|نوع ۳:}{value| ' + fa(r3) + ' }{rate|(' + fa(getP(r3)) + '٪)}'
                                     ].join('\n'),
                                     rich: {
-                                        title: { color: '#ffffff', align: 'center', fontFamily: 'Vazirmatn', padding: [6, 10], fontWeight: 'bold' },
-                                        abg: { backgroundColor: '#1e293b', width: '100%', align: 'right', height: 28, borderRadius: [6, 6, 0, 0] },
-                                        type: { width: 45, align: 'right', fontFamily: 'Vazirmatn', color: '#334155', fontSize: 11, padding: [4, 8, 4, 0] },
-                                        value: { width: 40, align: 'center', fontFamily: 'Vazirmatn', color: '#0f172a', fontWeight: 'bold', padding: [4, 0] },
-                                        rate: { width: 35, align: 'left', fontFamily: 'Vazirmatn', color: '#0f172a', fontWeight: 'bold', padding: [4, 0, 4, 8] }
+                                        title: { color: '#ffffff', align: 'center', fontFamily: 'Vazirmatn', padding: [8, 12], fontWeight: 'bold' },
+                                        abg: { backgroundColor: '#1e293b', width: '100%', align: 'right', height: 32, borderRadius: [6, 6, 0, 0] },
+                                        // حذف width برای جلوگیری از قیچی شدن اعداد بزرگ
+                                        type: { color: '#475569', fontFamily: 'Vazirmatn', fontSize: 11, padding: [6, 12, 2, 4] },
+                                        value: { color: '#0f172a', fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: 'bold', padding: [6, 4, 2, 4] },
+                                        rate: { color: '#0284c7', fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: 'bold', padding: [6, 4, 2, 12] }
                                     }
                                 }
                             },
                             { value: constr, name: 'احداثی' },
                             { value: live, name: 'لوازم معیشتی' }
                         ],
-                        emphasis: {
-                            itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
-                        }
-                    }
-                ]
-            };
-
-            typeChart.setOption(optionType);
-            
-            let performanceChartDom = document.getElementById('performanceChart');
-            performanceChartDom.style.height = "255px";
-            let performanceChart = echarts.init(performanceChartDom);
-
-            let optionPerformance = {
-                tooltip: {
-                    trigger: 'item',
-                    formatter: '{b} : {c} واحد',
-                    textStyle: { fontFamily: 'Vazirmatn', direction: 'rtl' }
-                },
-                legend: {
-                    bottom: 0,
-                    left: 'center',
-                    data: ['نوع ۱', 'نوع ۲ (جزئی)', 'نوع ۳ (درب و پنجره)'],
-                    textStyle: { fontFamily: 'Vazirmatn', fontSize: 11 }
-                },
-                color: ['#8b5cf6', '#f97316', '#06b6d4'],
-                series: [
-                    {
-                        type: 'pie',
-                        radius: '55%',
-                        center: ['50%', '45%'],
-                        data: [
-                            { value: pr1, name: 'نوع ۱' },
-                            { value: pr2, name: 'نوع ۲ (جزئی)' },
-                            { value: pr3, name: 'نوع ۳ (درب و پنجره)' }
-                        ],
-                        label: {
-                            show: true,
-                            position: 'outside',
-                            color: '#000000',
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 10,
-                            formatter: function(params) {
-                                return params.name + ':\n\n' + fa(params.value) + ' واحد';
-                            }
-                        },
-                        labelLine: {
-                            show: true,
-                            length: 15,
-                            length2: 20,
-                            smooth: true
-                        },
                         emphasis: {
                             itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
                         }
