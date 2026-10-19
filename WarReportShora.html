@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>داشبورد تحلیلی بازسازی جنگ رمضان | سامانه هوشمند مدیریتی ریاست</title>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<!-- Vazirmatn Font -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
+<!-- Chart.js + Datalabels -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+<style>
+  :root{
+    --bg:#eef2f7;
+    --card:#ffffff;
+    --ink:#0f172a;
+    --muted:#64748b;
+    --primary:#0b3d6b;
+    --primary-2:#14639f;
+    --sky:#0ea5e9;
+    --accent:#f0a02e;
+    --green:#16a34a;
+    --red:#dc2626;
+    --radius:20px;
+    --shadow:0 10px 30px -12px rgba(15,23,42,.22);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Vazirmatn', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 100% 0%, #dbeafe 0%, transparent 42%),
+      radial-gradient(circle at 0% 100%, #e0f2fe 0%, transparent 38%),
+      var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:1300px; margin:0 auto; padding:22px 16px 70px;}
+
+  /* ================= HERO ================= */
+  .hero{
+    position:relative; overflow:hidden;
+    border-radius:28px;
+    padding:38px 34px 32px;
+    color:#fff;
+    background:
+      radial-gradient(ellipse at 12% 12%, rgba(56,189,248,.45), transparent 58%),
+      radial-gradient(ellipse at 92% 6%, rgba(251,191,36,.28), transparent 52%),
+      linear-gradient(135deg,#08243f 0%, #0b3d6b 46%, #14679f 100%);
+    box-shadow:0 24px 50px -18px rgba(8,36,63,.6);
+    margin-bottom:24px;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image: radial-gradient(circle at 82% 28%, #000, transparent 72%);
+    mask-image: radial-gradient(circle at 82% 28%, #000, transparent 72%);
+    pointer-events:none;
+  }
+  .hero > *{position:relative; z-index:2;}
+
+  .hero-badge{
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.25);
+    padding:7px 16px; border-radius:999px;
+    font-size:13px; font-weight:600; letter-spacing:.2px;
+    margin-bottom:16px;
+    backdrop-filter:blur(6px);
+  }
+  .hero-badge i{color:#7dd3fc}
+
+  .hero h1{
+    margin:0 0 10px;
+    font-size:clamp(20px, 3.1vw, 34px);
+    font-weight:800;
+    line-height:1.5;
+    letter-spacing:-.3px;
+  }
+  .hero h1 span{
+    background:linear-gradient(90deg,#fbbf24,#fde68a);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .hero p{
+    margin:0 0 22px;
+    font-size:clamp(13px,1.5vw,15.5px);
+    color:#cfe3f5;
+    max-width:820px;
+    line-height:1.9;
+  }
+
+  .chips{display:flex; flex-wrap:wrap; gap:12px;}
+  .chip{
+    display:inline-flex; align-items:center; gap:9px;
+    background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.26);
+    padding:10px 20px;
+    border-radius:999px;
+    font-size:13.5px;
+    font-weight:600;
+    color:#fff;
+    text-decoration:none;
+    transition:all .25s ease;
+    backdrop-filter:blur(6px);
+    white-space:nowrap;
+  }
+  .chip i{font-size:14px; color:#7dd3fc;}
+  .chip:hover{background:rgba(255,255,255,.26); transform:translateY(-2px); box-shadow:0 8px 20px -8px rgba(0,0,0,.5);}
+  .chip-link{background:linear-gradient(135deg,#f59e0b,#f97316); border-color:transparent; color:#1a1200;}
+  .chip-link i{color:#1a1200;}
+
+  /* ================= KPI ================= */
+  .kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(175px,1fr));
+    gap:16px;
+    margin-bottom:26px;
+  }
+  .kpi{
+    position:relative;
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:20px 18px 18px;
+    box-shadow:var(--shadow);
+    border-top:4px solid var(--primary-2);
+    overflow:hidden;
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .kpi:hover{transform:translateY(-4px); box-shadow:0 18px 36px -16px rgba(15,23,42,.4);}
+  .kpi::before{
+    content:"";
+    position:absolute; left:-30px; bottom:-40px;
+    width:110px; height:110px; border-radius:50%;
+    background:radial-gradient(circle, rgba(20,99,159,.10), transparent 70%);
+  }
+  .kpi-ico{
+    width:42px; height:42px; border-radius:13px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; margin-bottom:12px;
+    background:linear-gradient(135deg,#e0f2fe,#bae6fd);
+    color:#0369a1;
+  }
+  .kpi .val{
+    font-size:clamp(21px,2.6vw,27px);
+    font-weight:800;
+    line-height:1.2;
+    letter-spacing:-.5px;
+  }
+  .kpi .lbl{
+    margin-top:6px;
+    font-size:12.5px;
+    color:var(--muted);
+    font-weight:500;
+    line-height:1.6;
+  }
+  .kpi.c-blue{border-top-color:#14639f}
+  .kpi.c-amber{border-top-color:#f59e0b}
+  .kpi.c-amber .kpi-ico{background:linear-gradient(135deg,#fef3c7,#fde68a); color:#b45309}
+  .kpi.c-red{border-top-color:#dc2626}
+  .kpi.c-red .kpi-ico{background:linear-gradient(135deg,#fee2e2,#fecaca); color:#b91c1c}
+  .kpi.c-green{border-top-color:#16a34a}
+  .kpi.c-green .kpi-ico{background:linear-gradient(135deg,#dcfce7,#bbf7d0); color:#15803d}
+  .kpi.c-sky{border-top-color:#0ea5e9}
+  .kpi.c-sky .kpi-ico{background:linear-gradient(135deg,#e0f2fe,#bae6fd); color:#0369a1}
+  .kpi.c-violet{border-top-color:#7c3aed}
+  .kpi.c-violet .kpi-ico{background:linear-gradient(135deg,#ede9fe,#ddd6fe); color:#6d28d9}
+  .kpi.c-teal{border-top-color:#0d9488}
+  .kpi.c-teal .kpi-ico{background:linear-gradient(135deg,#ccfbf1,#99f6e4); color:#0f766e}
+
+  /* ================= SECTIONS ================= */
+  .section-title{
+    display:flex; align-items:center; gap:11px;
+    font-size:17px; font-weight:800;
+    color:var(--primary);
+    margin:6px 0 16px;
+    padding-right:2px;
+  }
+  .section-title i{
+    width:36px; height:36px; border-radius:11px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px;
+    background:linear-gradient(135deg,#0b3d6b,#14639f);
+    color:#fff;
+    box-shadow:0 6px 16px -6px rgba(11,61,107,.7);
+  }
+  .section-title .sub{font-size:12px; font-weight:500; color:var(--muted); margin-right:auto;}
+
+  .grid-2{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(340px,1fr));
+    gap:18px;
+    margin-bottom:26px;
+  }
+  .grid-2.wide{grid-template-columns:repeat(auto-fit, minmax(420px,1fr));}
+
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:20px 20px 16px;
+    box-shadow:var(--shadow);
+    border:1px solid #e8eef6;
+    transition:box-shadow .25s ease;
+  }
+  .card:hover{box-shadow:0 16px 36px -18px rgba(15,23,42,.4);}
+
+  .card-head{
+    display:flex; align-items:flex-start; gap:10px;
+    margin-bottom:14px;
+  }
+  .card-head .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:linear-gradient(135deg,#0ea5e9,#14639f);
+    margin-top:7px; flex:none;
+    box-shadow:0 0 0 4px rgba(14,165,233,.14);
+  }
+  .card-head h3{
+    margin:0; font-size:14.5px; font-weight:700; line-height:1.6;
+  }
+  .card-head small{
+    display:block; color:var(--muted); font-size:11.5px; font-weight:500; margin-top:3px;
+  }
+  .chart-box{position:relative; height:300px;}
+  .chart-box.tall{height:330px;}
+  .chart-box.short{height:250px;}
+
+  /* ================= ANALYSIS ================= */
+  .analysis-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+    gap:16px;
+    margin-bottom:26px;
+  }
+  .ana{
+    position:relative;
+    background:#fff;
+    border-radius:18px;
+    padding:20px 20px 20px 22px;
+    box-shadow:var(--shadow);
+    border-right:5px solid var(--sky);
+    overflow:hidden;
+  }
+  .ana.a-red{border-right-color:#ef4444}
+  .ana.a-green{border-right-color:#22c55e}
+  .ana.a-amber{border-right-color:#f59e0b}
+  .ana.a-violet{border-right-color:#7c3aed}
+  .ana.a-teal{border-right-color:#0d9488}
+
+  .ana .ana-ico{
+    width:38px;height:38px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;margin-bottom:12px;
+    background:#f1f5f9;color:var(--primary);
+  }
+  .ana.a-red .ana-ico{background:#fee2e2;color:#b91c1c}
+  .ana.a-green .ana-ico{background:#dcfce7;color:#15803d}
+  .ana.a-amber .ana-ico{background:#fef3c7;color:#b45309}
+  .ana.a-violet .ana-ico{background:#ede9fe;color:#6d28d9}
+  .ana.a-teal .ana-ico{background:#ccfbf1;color:#0f766e}
+
+  .ana h4{margin:0 0 8px; font-size:14px; font-weight:700; line-height:1.6;}
+  .ana p{margin:0; font-size:12.6px; color:#475569; line-height:2;}
+  .ana .big{
+    font-size:23px; font-weight:800; color:var(--primary);
+    display:block; margin-bottom:4px; letter-spacing:-.5px;
+  }
+
+  /* ================= PROGRESS BARS ================= */
+  .prog-list{display:flex; flex-direction:column; gap:15px; margin-top:4px;}
+  .prog-item .prog-top{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:12.5px; font-weight:600; margin-bottom:7px;
+  }
+  .prog-top span:last-child{color:var(--muted); font-weight:700; direction:ltr;}
+  .prog-bar{
+    height:11px; border-radius:999px; background:#eef2f7; overflow:hidden;
+    box-shadow:inset 0 1px 3px rgba(15,23,42,.06);
+  }
+  .prog-fill{
+    height:100%; border-radius:999px; width:0;
+    transition:width 1.4s cubic-bezier(.22,1,.36,1);
+    background:linear-gradient(90deg,#14639f,#0ea5e9);
+  }
+  .prog-fill.g{background:linear-gradient(90deg,#15803d,#22c55e)}
+  .prog-fill.a{background:linear-gradient(90deg,#b45309,#f59e0b)}
+  .prog-fill.r{background:linear-gradient(90deg,#991b1b,#ef4444)}
+  .prog-fill.v{background:linear-gradient(90deg,#5b21b6,#8b5cf6)}
+
+  /* ================= FOOTER ================= */
+  .footer{
+    margin-top:32px;
+    text-align:center;
+    font-size:12px;
+    color:#94a3b8;
+    line-height:2;
+    padding-top:22px;
+    border-top:1px dashed #cbd5e1;
+  }
+  .footer strong{color:var(--primary); font-weight:700;}
+
+  /* ================= ANIMATION ================= */
+  @keyframes rise{
+    from{opacity:0; transform:translateY(16px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .anim{animation:rise .6s ease both;}
+  .d1{animation-delay:.05s} .d2{animation-delay:.12s} .d3{animation-delay:.19s}
+  .d4{animation-delay:.26s} .d5{animation-delay:.33s} .d6{animation-delay:.40s}
+
+  /* ================= RESPONSIVE ================= */
+  @media (max-width:768px){
+    .wrap{padding:14px 12px 50px;}
+    .hero{padding:28px 20px 26px; border-radius:22px;}
+    .hero p{font-size:12.8px; line-height:1.9;}
+    .chip{font-size:12px; padding:9px 15px;}
+    .kpi-grid{grid-template-columns:repeat(2,1fr); gap:12px;}
+    .kpi{padding:16px 14px;}
+    .kpi-ico{width:36px;height:36px;font-size:15px;border-radius:11px;}
+    .grid-2, .grid-2.wide{grid-template-columns:1fr; gap:14px;}
+    .chart-box{height:270px;}
+    .chart-box.tall{height:300px;}
+    .card{padding:16px 14px 12px; border-radius:16px;}
+    .section-title{font-size:15px;}
+    .analysis-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:400px){
+    .kpi-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero anim">
+    <div class="hero-badge">
+      <i class="fa-solid fa-building-shield"></i>
+      سامانه هوشمند مدیریتی ریاست
+    </div>
+    <h1>گزارش تحلیلی اهم اقدامات بازسازی <span>جنگ رمضان</span></h1>
+    <p>
+      داشبورد مدیریتی عملکرد بازسازی واحدهای مسکونی، تجاری و اداری آسیب‌دیده در روستاها و شهرهای کشور
+     
+    </p>
+    <div class="chips">
+      <span class="chip"><i class="fa-regular fa-calendar-check"></i> تاریخ گزارش: 1405/07/18</span>
+      <a class="chip chip-link" href="./WarRepShora.pdf" target="_blank" rel="noopener">
+        <i class="fa-solid fa-file-pdf"></i> جزئیات گزارش
+      </a>
+    </div>
+  </header>
+
+  <!-- ============ KPI CARDS ============ -->
+  <section class="kpi-grid">
+    <div class="kpi c-sky anim d1">
+      <div class="kpi-ico"><i class="fa-solid fa-house-chimney"></i></div>
+      <div class="val">185</div>
+      <div class="lbl">روستای آسیب‌دیده</div>
+    </div>
+
+    <div class="kpi c-blue anim d1">
+      <div class="kpi-ico"><i class="fa-solid fa-city"></i></div>
+      <div class="val">215</div>
+      <div class="lbl">شهر آسیب‌دیده</div>
+    </div>
+
+    <div class="kpi c-violet anim d2">
+      <div class="kpi-ico"><i class="fa-solid fa-building"></i></div>
+      <div class="val">7</div>
+      <div class="lbl">کلان‌شهر آسیب‌دیده</div>
+    </div>
+
+    <div class="kpi c-red anim d2">
+      <div class="kpi-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="val">101,619</div>
+      <div class="lbl">کل واحدهای آسیب‌دیده (مسکونی و تجاری)</div>
+    </div>
+
+    <div class="kpi c-amber anim d3">
+      <div class="kpi-ico"><i class="fa-solid fa-trowel-bricks"></i></div>
+      <div class="val">1,067</div>
+      <div class="lbl">واحد احداثی (بازسازی کامل)</div>
+    </div>
+
+    <div class="kpi c-green anim d3">
+      <div class="kpi-ico"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+      <div class="val">85,884</div>
+      <div class="lbl">واحد تعمیری (مسکونی)</div>
+    </div>
+
+    <div class="kpi c-teal anim d4">
+      <div class="kpi-ico"><i class="fa-solid fa-store"></i></div>
+      <div class="val">15,735</div>
+      <div class="lbl">واحد تجاری تعمیری</div>
+    </div>
+
+    <div class="kpi c-blue anim d4">
+      <div class="kpi-ico"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="val">93,520</div>
+      <div class="lbl">واحد تعمیرشده و به بهره‌برداری رسیده</div>
+    </div>
+  </section>
+
+  <!-- ============ CHARTS ROW 1 ============ -->
+  <div class="section-title">
+    <i class="fa-solid fa-chart-pie"></i>
+    تحلیل کمی آسیب‌ها و روند بازسازی
+    <span class="sub">داده‌های تجمیعی ستادهای بنیاد مسکن</span>
+  </div>
+
+  <div class="grid-2">
+    <div class="card anim d1">
+      <div class="card-head">
+        <div class="dot"></div>
+        <div>
+          <h3>توزیع واحدهای تعمیری در سه گروه</h3>
+          <small>مجموع ۸۵,۸۸۴ واحد مسکونی تعمیری</small>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="chartRepairType"></canvas></div>
+    </div>
+
+    <div class="card anim d2">
+      <div class="card-head">
+        <div class="dot"></div>
+        <div>
+          <h3>مقایسه واحدهای آسیب‌دیده و تعمیرشده</h3>
+          <small>مسکونی و تجاری — تعداد واحد</small>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="chartDamagedRepaired"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ============ CHARTS ROW 2 ============ -->
+  <div class="grid-2">
+    <div class="card anim d3">
+      <div class="card-head">
+        <div class="dot"></div>
+        <div>
+          <h3>برآورد خسارت و تأمین اعتبار</h3>
+          <small>ارقام به «همت» (هزار میلیارد تومان)</small>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="chartFunding"></canvas></div>
+    </div>
+
+    <div class="card anim d4">
+      <div class="card-head">
+        <div class="dot"></div>
+        <div>
+          <h3>خدمات ارائه‌شده به واحدهای احداثی</h3>
+          <small>تعداد واحد — از نقشه‌کشی تا بهره‌برداری</small>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="chartServices"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ============ CHARTS ROW 3 ============ -->
+  <div class="grid-2 wide">
+    <div class="card anim d5">
+      <div class="card-head">
+        <div class="dot"></div>
+        <div>
+          <h3>مقاوم‌سازی واحدهای احداثی</h3>
+          <small>تهیه طرح، اجرا و مراحل تکمیلی</small>
+        </div>
+      </div>
+      <div class="chart-box short"><canvas id="chartRetrofit"></canvas></div>
+    </div>
+
+    <div class="card anim d6">
+      <div class="card-head">
+        <div class="dot"></div>
+        <div>
+          <h3>پیشرفت اجرای بازسازی و خدمات</h3>
+          <small>درصد تحقق نسبت به جامعه هدف</small>
+        </div>
+      </div>
+      <div class="prog-list" style="padding:6px 4px 8px;">
+        <div class="prog-item">
+          <div class="prog-top"><span>تعمیر و بازسازی واحدهای مسکونی</span><span>93.3%</span></div>
+          <div class="prog-bar"><div class="prog-fill g" data-w="93.3"></div></div>
+        </div>
+        <div class="prog-item">
+          <div class="prog-top"><span>تعمیر واحدهای تجاری</span><span>85.2%</span></div>
+          <div class="prog-bar"><div class="prog-fill" data-w="85.2"></div></div>
+        </div>
+        <div class="prog-item">
+          <div class="prog-top"><span>آواربرداری و بازبافت مصالح</span><span>75.7%</span></div>
+          <div class="prog-bar"><div class="prog-fill v" data-w="75.7"></div></div>
+        </div>
+        <div class="prog-item">
+          <div class="prog-top"><span>تهیه نقشه و محاسبات فنی</span><span>74.1%</span></div>
+          <div class="prog-bar"><div class="prog-fill a" data-w="74.1"></div></div>
+        </div>
+        <div class="prog-item">
+          <div class="prog-top"><span>صدور پروانه ساختمانی</span><span>64.4%</span></div>
+          <div class="prog-bar"><div class="prog-fill r" data-w="64.4"></div></div>
+        </div>
+        <div class="prog-item">
+          <div class="prog-top"><span>شروع عملیات اجرایی احداثی</span><span>44.3%</span></div>
+          <div class="prog-bar"><div class="prog-fill" data-w="44.3"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ANALYSIS CARDS ============ -->
+  <div class="section-title">
+    <i class="fa-solid fa-lightbulb"></i>
+    کارت‌های تحلیلی مدیریتی
+  </div>
+
+  <div class="analysis-grid">
+    <div class="ana a-green anim d1">
+      <div class="ana-ico"><i class="fa-solid fa-sack-dollar"></i></div>
+      <span class="big">71%</span>
+      <h4>پوشش تأمین اعتبار ساختمان‌ها</h4>
+      <p>از ۵.۲۲ همت برآورد خسارت ساختمان‌ها، مبلغ ۳.۷۳ همت تأمین شده است؛ شکاف اعتباری حدود ۱.۴۹ همت برآورد می‌شود.</p>
+    </div>
+
+    <div class="ana a-red anim d2">
+      <div class="ana-ico"><i class="fa-solid fa-layer-group"></i></div>
+      <span class="big">59.4%</span>
+      <h4>سهم گروه سه تعمیری</h4>
+      <p>۵۱,۰۴۷ واحد از ۸۵,۸۸۴ واحد تعمیری در گروه سه (سنگین‌ترین گروه) قرار دارند و نیازمند توجه ویژه اعتباری و اجرایی هستند.</p>
+    </div>
+
+    <div class="ana a-amber anim d3">
+      <div class="ana-ico"><i class="fa-solid fa-house-user"></i></div>
+      <span class="big">3,246</span>
+      <h4>اسکان موقت ساکنین</h4>
+      <p>برای واحدهای غیرقابل سکونت، تسهیلات قرض‌الحسنه ودیعه مسکن با اعتبار ۱,۸۳۶ میلیارد تومان از طریق بانک مسکن پرداخت شد.</p>
+    </div>
+
+    <div class="ana a-violet anim d4">
+      <div class="ana-ico"><i class="fa-solid fa-couch"></i></div>
+      <span class="big">14,300</span>
+      <h4>لوازم ضروری منزل</h4>
+      <p>با کمک نهادهای انقلاب اسلامی به مبلغ ۱.۲۶۷ همت شامل ۷۶۶ میلیارد تومان کمک بلاعوض و ۵۰۱ میلیارد تومان تسهیلات تأمین شد.</p>
+    </div>
+
+    <div class="ana a-teal anim d5">
+      <div class="ana-ico"><i class="fa-solid fa-map-location-dot"></i></div>
+      <span class="big">716 هکتار</span>
+      <h4>مولدسازی اراضی</h4>
+      <p>اراضی تملیک‌شده در ۱۷ استان کشور در مرحله دریافت سند است؛ ۱,۰۰۰ مترمربع زمین نیز در مرحله مزایده فروش قرار دارد.</p>
+    </div>
+
+    <div class="ana a-green anim d6">
+      <div class="ana-ico"><i class="fa-solid fa-arrows-rotate"></i></div>
+      <span class="big">92.0%</span>
+      <h4>نرخ تحقق تعمیرات</h4>
+      <p>از مجموع ۱۰۱,۶۱۹ واحد آسیب‌دیده، ۹۳,۵۲۰ واحد تعمیر و به بهره‌برداری رسیده‌اند؛ ۴۷۳ واحد احداثی عملیات اجرایی آغاز کرده است.</p>
+    </div>
+  </div>
+
+  <!-- ============ FOOTER ============ -->
+  <div class="footer">
+    <strong>سامانه هوشمند مدیریتی ریاست</strong> — گزارش اهم اقدامات بازسازی جنگ رمضان جهت شورای مرکزی بنیاد<br>
+    این داشبورد صرفاً جهت ارائه تحلیلی داده‌های گزارش تهیه شده است. · تاریخ گزارش: 1405/07/18
+  </div>
+
+</div>
+
+<script>
+/* ================== SETUP ================== */
+Chart.register(ChartDataLabels);
+Chart.defaults.font.family = "'Vazirmatn', system-ui, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = "#475569";
+
+const nf  = (v) => Number(v).toLocaleString('en-US');
+const nf1 = (v) => Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+/* ================== 1) DONUT — توزیع گروه‌های تعمیری ================== */
+new Chart(document.getElementById('chartRepairType'), {
+  type: 'doughnut',
+  data: {
+    labels: ['گروه یک', 'گروه دو', 'گروه سه'],
+    datasets: [{
+      data: [4520, 30317, 51047],
+      backgroundColor: ['#fbbf24', '#38bdf8', '#1d4ed8'],
+      borderColor: '#ffffff',
+      borderWidth: 4,
+      hoverOffset: 14
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '60%',
+    layout: { padding: 8 },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 12, weight: '600' } }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(11,61,107,.95)',
+        padding: 12,
+        cornerRadius: 10,
+        titleFont: { size: 13 },
+        bodyFont: { size: 12.5 },
+        callbacks: {
+          label: (c) => {
+            const total = c.dataset.data.reduce((a, b) => a + b, 0);
+            const pct = ((c.parsed / total) * 100).toFixed(1);
+            return ` ${nf(c.parsed)} واحد (${pct}%)`;
+          }
+        }
+      },
+      datalabels: {
+        color: '#000',
+        font: { weight: '700', size: 12 },
+        formatter: (v) => nf(v),
+        offset: 41,
+        anchor: 'center',
+        align: 'center',
+        display: (ctx) => {
+          const d = ctx.dataset.data;
+          const t = d.reduce((a, b) => a + b, 0);
+          return d[ctx.dataIndex] / t > 0.04;
+        }
+      }
+    }
+  }
+});
+
+/* ================== 2) BAR — آسیب‌دیده vs تعمیرشده ================== */
+new Chart(document.getElementById('chartDamagedRepaired'), {
+  type: 'bar',
+  data: {
+    labels: ['واحد مسکونی', 'واحد تجاری'],
+    datasets: [
+      {
+        label: 'آسیب‌دیده',
+        data: [85884, 15735],
+        backgroundColor: '#ef4444',
+        borderRadius: 9,
+        maxBarThickness: 68
+      },
+      {
+        label: 'تعمیر و بهره‌برداری‌شده',
+        data: [80111, 13409],
+        backgroundColor: '#22c55e',
+        borderRadius: 9,
+        maxBarThickness: 68
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 22, right: 21 } },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { callback: (v) => nf(v), font: { size: 11 } },
+        grid: { color: '#eef2f7' },
+        border: { display: false }
+      },
+      x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 12, weight: '600' } } }
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 12, weight: '600' } }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(11,61,107,.95)',
+        padding: 12,
+        cornerRadius: 10,
+        callbacks: { label: (c) => ` ${c.dataset.label}: ${nf(c.parsed.y)} واحد` }
+      },
+      datalabels: {
+        anchor: 'end',
+        align: 'right',
+        offset: 21,
+        clamp: true,
+        color: '#0f172a',
+        font: { weight: '700', size: 11 },
+        formatter: (v) => nf(v)
+      }
+    }
+  }
+});
+
+/* ================== 3) HORIZONTAL BAR — اعتبارات ================== */
+new Chart(document.getElementById('chartFunding'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'برآورد خسارت ساختمان‌ها',
+      'تأمین اعتبار ساختمان‌ها',
+      'برآورد خسارت لوازم و اثاثیه',
+      'تأمین اعتبار لوازم و اثاثیه'
+    ],
+    datasets: [{
+      label: 'همت',
+      data: [5.22, 3.73, 11, 3.267],
+      backgroundColor: ['#ef4444', '#22c55e', '#ef4444', '#22c55e'],
+      borderRadius: 8,
+      maxBarThickness: 30
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { left: 8, right: 21 } },
+    scales: {
+      x: {
+        beginAtZero: true,
+        grid: { color: '#eef2f7' },
+        border: { display: false },
+        ticks: { callback: (v) => v + ' همت', font: { size: 11 } }
+      },
+      y: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { font: { size: 11.5, weight: '600' } }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(11,61,107,.95)',
+        padding: 12,
+        cornerRadius: 10,
+        callbacks: { label: (c) => ` ${nf1(c.parsed.x)} همت` }
+      },
+      datalabels: {
+        anchor: 'end',
+        align: 'right',
+        offset: 21,
+        clamp: true,
+        color: '#0f172a',
+        font: { weight: '700', size: 11 },
+        formatter: (v) => nf1(v) + ' همت'
+      }
+    }
+  }
+});
+
+/* ================== 4) HORIZONTAL BAR — خدمات ================== */
+new Chart(document.getElementById('chartServices'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'آواربرداری و بازبافت مصالح',
+      'تهیه نقشه و محاسبات فنی',
+      'صدور پروانه ساختمانی',
+      'شروع عملیات اجرایی',
+      'واحدهای به بهره‌برداری رسیده'
+    ],
+    datasets: [{
+      label: 'تعداد واحد',
+      data: [808, 791, 687, 473, 18],
+      backgroundColor: ['#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#fbbf24'],
+      borderRadius: 8,
+      maxBarThickness: 28
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { left: 12, right: 21 } },
+    scales: {
+      x: {
+        beginAtZero: true,
+        grid: { color: '#eef2f7' },
+        border: { display: false },
+        ticks: { callback: (v) => nf(v), font: { size: 11 } }
+      },
+      y: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { font: { size: 11.5, weight: '600' } }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(11,61,107,.95)',
+        padding: 12,
+        cornerRadius: 10,
+        callbacks: { label: (c) => ` ${nf(c.parsed.x)} واحد` }
+      },
+      datalabels: {
+        anchor: 'end',
+        align: 'right',
+        offset: 21,
+        clamp: true,
+        color: '#0f172a',
+        font: { weight: '700', size: 11 },
+        formatter: (v) => nf(v)
+      }
+    }
+  }
+});
+
+/* ================== 5) VERTICAL BAR — مقاوم‌سازی ================== */
+new Chart(document.getElementById('chartRetrofit'), {
+  type: 'bar',
+  data: {
+    labels: ['تهیه طرح و نقشه', 'اجرای طرح مقاوم‌سازی', 'در مرحله نازک‌کاری'],
+    datasets: [{
+      label: 'تعداد واحد',
+      data: [139, 100, 28],
+      backgroundColor: ['#0ea5e9', '#22c55e', '#fbbf24'],
+      borderRadius: 10,
+      maxBarThickness: 72
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 24, right: 21 } },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: '#eef2f7' },
+        border: { display: false },
+        ticks: { callback: (v) => nf(v), font: { size: 11 } }
+      },
+      x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11.5, weight: '600' } } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(11,61,107,.95)',
+        padding: 12,
+        cornerRadius: 10,
+        callbacks: { label: (c) => ` ${nf(c.parsed.y)} واحد` }
+      },
+      datalabels: {
+        anchor: 'end',
+        align: 'right',
+        offset: 21,
+        clamp: true,
+        color: '#0f172a',
+        font: { weight: '700', size: 12 },
+        formatter: (v) => nf(v)
+      }
+    }
+  }
+});
+
+/* ================== PROGRESS BARS ANIMATION ================== */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.prog-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 350);
+});
+</script>
+</body>
+</html>
